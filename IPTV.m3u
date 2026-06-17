@@ -156,6 +156,52 @@ https://video-ar.radioradicale.it/diretta/camera2/playlist.m3u8
 https://raievent10-elem-live.akamaized.net/hls/live/619189/raievent10/raievent10/playlist.m3u8
 #EXTINF:-1 tvg-name="UniNettuno University TV Ⓖ" tvg-logo="https://i.imgur.com/BOGMeio.png" tvg-id="UniNettunoUniversityTV.it" tvg-chno="701" tvg-country="IT" group-title="Italy",UniNettuno University TV Ⓖ
 https://stream6-rai-it.akamaized.net/live/uninettuno/playlist.m3u8
+# EXTINF : -1 , Rai 3 TGR Valle d'Aosta [301]
+https://mediapolis.rai.it/relinker/relinkerServlet.htm?cont=32909&output=16
+#ESTINF : -1 , Rai 3 TGR Piemonte [302 ]
+https://mediapolis.rai.it/relinker/relinkerServlet.htm?cont=89763&output=16
+#ESTINF : -1 , Rai 3 TGR Liguria [303 ]
+https://mediapolis.rai.it/relinker/relinkerServlet.htm?cont=72920&output=16
+#ESTINF : -1 , Rai 3 TGR Lombardia [304 ]
+https://mediapolis.rai.it/relinker/relinkerServlet.htm?cont=72916&output=16
+# EXTINF : -1 , Rai 3 TGR Veneto [305]
+https://mediapolis.rai.it/relinker/relinkerServlet.htm?cont=17190&output=16
+# EXTINF : -1 , Rai 3 TGR Trentino Alto Adige Bolzano [306]
+https://mediapolis.rai.it/relinker/relinkerServlet.htm?cont=32907&output=16
+#EXTINF : -1 , Rai 3 TGR Trentino Alto Adige Trento [307 ]
+https://mediapolis.rai.it/relinker/relinkerServlet.htm?cont=739016&output=16
+# EXTINF : -1 , Rai 3 TGR Südtirol HD [308]
+https://wzstreaming.rai.it/TVlive/smil:liveStream.smil/playlist.m3u8
+#EXTINF : -1 , Rai 3 TGR Friuli Venezia Giulia [309 ]
+https://mediapolis.rai.it/relinker/relinkerServlet.htm?cont=72926&output=16
+#EXTINF : -1 , Rai 3 TGR Furlanija Krajina (Rai 3 Bis) [310 ]
+https://mediapolis.rai.it/relinker/relinkerServlet.htm?cont=87837&output=16
+# EXTINF : -1 , Rai 3 TGR Emilia-Romagna [311]
+https://mediapolis.rai.it/relinker/relinkerServlet.htm?cont=681&output=16
+#ESTINF : -1 , Rai 3 TGR Toscana [312 ]
+https://mediapolis.rai.it/relinker/relinkerServlet.htm?cont=35264&output=16
+#ESTINF : -1 , Rai 3 TGR Marche [313]
+https://mediapolis.rai.it/relinker/relinkerServlet.htm?cont=72386&output=16
+# EXTINF : -1 , Rai 3 TGR Umbria [314]
+https://mediapolis.rai.it/relinker/relinkerServlet.htm?cont=32908&output=16
+#ESTINF : -1 , Rai 3 TGR Lazio [315]
+https://mediapolis.rai.it/relinker/relinkerServlet.htm?cont=72918&output=16
+# EXTINF : -1 , Rai 3 TGR Abruzzo [316]
+https://mediapolis.rai.it/relinker/relinkerServlet.htm?cont=4152&output=16
+#ESTINF : -1 , Rai 3 TGR Molise [317]
+https://mediapolis.rai.it/relinker/relinkerServlet.htm?cont=72387&output=16
+# EXTINF : -1 , Rai 3 TGR Campania [318]
+https://mediapolis.rai.it/relinker/relinkerServlet.htm?cont=4120&output=16
+# EXTINF : -1 , Rai 3 TGR Puglia [319]
+https://mediapolis.rai.it/relinker/relinkerServlet.htm?cont=89765&output=16
+#ESTINF : -1 , Rai 3 TGR Basilicata [320]
+https://mediapolis.rai.it/relinker/relinkerServlet.htm?cont=4153&output=16
+# EXTINF : -1 , Rai 3 TGR Calabria [321]
+https://mediapolis.rai.it/relinker/relinkerServlet.htm?cont=24271&output=16
+# EXTINF : -1 , Rai 3 TGR Sardegna [322]
+https://mediapolis.rai.it/relinker/relinkerServlet.htm?cont=18852&output=16
+#ESTINF : -1 , Rai 3 TGR Sicilia [323 ]
+https://mediapolis.rai.it/relinker/relinkerServlet.htm?cont=35260&output=16
 #EXTINF:-1 tvg-name="111 Tv" tvg-logo="https://i.imgur.com/4jY8yAI.png" tvg-country="IT" group-title="Italy",111 Tv
 https://5db313b643fd8.streamlock.net/111/111/playlist.m3u8
 #EXTINF:-1 tvg-name="12 Tv Parma" tvg-logo="https://i.imgur.com/xnUgx6b.png" tvg-id="12TVParma.it" tvg-country="IT" group-title="Italy",12 Tv Parma
