@@ -156,28 +156,29 @@ https://video-ar.radioradicale.it/diretta/camera2/playlist.m3u8
 https://raievent10-elem-live.akamaized.net/hls/live/619189/raievent10/raievent10/playlist.m3u8
 #EXTINF:-1 tvg-name="UniNettuno University TV Ⓖ" tvg-logo="https://i.imgur.com/BOGMeio.png" tvg-id="UniNettunoUniversityTV.it" tvg-chno="701" tvg-country="IT" group-title="Italy",UniNettuno University TV Ⓖ
 https://stream6-rai-it.akamaized.net/live/uninettuno/playlist.m3u8
-# EXTINF : -1 , Rai 3 TGR Valle d'Aosta [301]
+#EXTINF:-1 tvg-name="Rai 3 TGR Valle d'Aosta Ⓖ" tvg-logo="https://i.imgur.com/9kuQCIi.png" tvg-id="Rai3.it" tvg-chno="3" tvg-country="IT" group-title="Italy",Rai 3 TGR Valle d'Aosta Ⓖ
 https://mediapolis.rai.it/relinker/relinkerServlet.htm?cont=32909&output=16
-#ESTINF : -1 , Rai 3 TGR Piemonte [302 ]
+#EXTINF:-1 tvg-name="Rai 3 TGR Piemonte Ⓖ" tvg-logo="https://i.imgur.com/9kuQCIi.png" tvg-id="Rai3.it" tvg-chno="3" tvg-country="IT" group-title="Italy",Rai 3 TGR Piemonte Ⓖ
 https://mediapolis.rai.it/relinker/relinkerServlet.htm?cont=89763&output=16
-#ESTINF : -1 , Rai 3 TGR Liguria [303 ]
+#EXTINF:-1 tvg-name="Rai 3 TGR Liguria Ⓖ" tvg-logo="https://i.imgur.com/9kuQCIi.png" tvg-id="Rai3.it" tvg-chno="3" tvg-country="IT" group-title="Italy",Rai 3 TGR Liguria Ⓖ
 https://mediapolis.rai.it/relinker/relinkerServlet.htm?cont=72920&output=16
-#ESTINF : -1 , Rai 3 TGR Lombardia [304 ]
+#EXTINF:-1 tvg-name="Rai 3 TGR Lombardia Ⓖ" tvg-logo="https://i.imgur.com/9kuQCIi.png" tvg-id="Rai3.it" tvg-chno="3" tvg-country="IT" group-title="Italy",Rai 3 TGR Lombardia Ⓖ
 https://mediapolis.rai.it/relinker/relinkerServlet.htm?cont=72916&output=16
-# EXTINF : -1 , Rai 3 TGR Veneto [305]
+#EXTINF:-1 tvg-name="Rai 3 TGR Veneto Ⓖ" tvg-logo="https://i.imgur.com/9kuQCIi.png" tvg-id="Rai3.it" tvg-chno="3" tvg-country="IT" group-title="Italy",Rai 3 TGR Veneto Ⓖ
 https://mediapolis.rai.it/relinker/relinkerServlet.htm?cont=17190&output=16
-# EXTINF : -1 , Rai 3 TGR Trentino Alto Adige Bolzano [306]
+#EXTINF:-1 tvg-name="Rai 3 TGR Trentino Alto Adige Bolzano Ⓖ" tvg-logo="https://i.imgur.com/9kuQCIi.png" tvg-id="Rai3.it" tvg-chno="3" tvg-country="IT" group-title="Italy",Rai 3 TGR Trentino Alto Adige Bolzano Ⓖ
 https://mediapolis.rai.it/relinker/relinkerServlet.htm?cont=32907&output=16
-#EXTINF : -1 , Rai 3 TGR Trentino Alto Adige Trento [307 ]
+#EXTINF:-1 tvg-name="Rai 3 TGR Trentino Alto Adige Trento Ⓖ" tvg-logo="https://i.imgur.com/9kuQCIi.png" tvg-id="Rai3.it" tvg-chno="3" tvg-country="IT" group-title="Italy",Rai 3 TGR Trentino Alto Adige Trento Ⓖ
 https://mediapolis.rai.it/relinker/relinkerServlet.htm?cont=739016&output=16
-# EXTINF : -1 , Rai 3 TGR Südtirol HD [308]
+#EXTINF:-1 tvg-name="Rai 3 TGR Südtirol HD Ⓖ" tvg-logo="https://i.imgur.com/9kuQCIi.png" tvg-id="Rai3.it" tvg-chno="3" tvg-country="IT" group-title="Italy",Rai 3 TGR Südtirol HD Ⓖ
 https://wzstreaming.rai.it/TVlive/smil:liveStream.smil/playlist.m3u8
-#EXTINF : -1 , Rai 3 TGR Friuli Venezia Giulia [309 ]
+#EXTINF:-1 tvg-name="Rai 3 TGR Friuli Venezia Giulia Ⓖ" tvg-logo="https://i.imgur.com/9kuQCIi.png" tvg-id="Rai3.it" tvg-chno="3" tvg-country="IT" group-title="Italy",Rai 3 TGR Friuli Venezia Giulia Ⓖ
 https://mediapolis.rai.it/relinker/relinkerServlet.htm?cont=72926&output=16
-#EXTINF : -1 , Rai 3 TGR Furlanija Krajina (Rai 3 Bis) [310 ]
+#EXTINF:-1 tvg-name="Rai 3 TGR Furlanija Krajina (Rai 3 Bis) Ⓖ" tvg-logo="https://i.imgur.com/9kuQCIi.png" tvg-id="Rai3.it" tvg-chno="3" tvg-country="IT" group-title="Italy",Rai 3 TGR Furlanija Krajina (Rai 3 Bis) Ⓖ
 https://mediapolis.rai.it/relinker/relinkerServlet.htm?cont=87837&output=16
-# EXTINF : -1 , Rai 3 TGR Emilia-Romagna [311]
+#EXTINF:-1 tvg-name="Rai 3 TGR Emilia-Romagna Ⓖ" tvg-logo="https://i.imgur.com/9kuQCIi.png" tvg-id="Rai3.it" tvg-chno="3" tvg-country="IT" group-title="Italy",Rai 3 TGR Emilia-Romagna Ⓖ
 https://mediapolis.rai.it/relinker/relinkerServlet.htm?cont=681&output=16
+
 #ESTINF : -1 , Rai 3 TGR Toscana [312 ]
 https://mediapolis.rai.it/relinker/relinkerServlet.htm?cont=35264&output=16
 #ESTINF : -1 , Rai 3 TGR Marche [313]
