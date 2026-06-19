@@ -178,30 +178,29 @@ https://mediapolis.rai.it/relinker/relinkerServlet.htm?cont=72926&output=16
 https://mediapolis.rai.it/relinker/relinkerServlet.htm?cont=87837&output=16
 #EXTINF:-1 tvg-name="Rai 3 TGR Emilia-Romagna Ⓖ" tvg-logo="https://i.imgur.com/9kuQCIi.png" tvg-id="Rai3.it" tvg-chno="3" tvg-country="IT" group-title="Italy",Rai 3 TGR Emilia-Romagna Ⓖ
 https://mediapolis.rai.it/relinker/relinkerServlet.htm?cont=681&output=16
-
-#ESTINF : -1 , Rai 3 TGR Toscana [312 ]
+#EXTINF:-1 tvg-name="Rai 3 TGR Toscana Ⓖ" tvg-logo="https://i.imgur.com/9kuQCIi.png" tvg-id="Rai3.it" tvg-chno="3" tvg-country="IT" group-title="Italy",Rai 3 TGR Toscana Ⓖ
 https://mediapolis.rai.it/relinker/relinkerServlet.htm?cont=35264&output=16
-#ESTINF : -1 , Rai 3 TGR Marche [313]
+#EXTINF:-1 tvg-name="Rai 3 TGR Marche Ⓖ" tvg-logo="https://i.imgur.com/9kuQCIi.png" tvg-id="Rai3.it" tvg-chno="3" tvg-country="IT" group-title="Italy",Rai 3 TGR Marche Ⓖ
 https://mediapolis.rai.it/relinker/relinkerServlet.htm?cont=72386&output=16
-# EXTINF : -1 , Rai 3 TGR Umbria [314]
+#EXTINF:-1 tvg-name="Rai 3 TGR Umbria Ⓖ" tvg-logo="https://i.imgur.com/9kuQCIi.png" tvg-id="Rai3.it" tvg-chno="3" tvg-country="IT" group-title="Italy",Rai 3 TGR Umbria Ⓖ
 https://mediapolis.rai.it/relinker/relinkerServlet.htm?cont=32908&output=16
-#ESTINF : -1 , Rai 3 TGR Lazio [315]
+#EXTINF:-1 tvg-name="Rai 3 TGR Lazio Ⓖ" tvg-logo="https://i.imgur.com/9kuQCIi.png" tvg-id="Rai3.it" tvg-chno="3" tvg-country="IT" group-title="Italy",Rai 3 TGR Lazio Ⓖ
 https://mediapolis.rai.it/relinker/relinkerServlet.htm?cont=72918&output=16
-# EXTINF : -1 , Rai 3 TGR Abruzzo [316]
+#EXTINF:-1 tvg-name=" Rai 3 TGR Abruzzo Ⓖ" tvg-logo="https://i.imgur.com/9kuQCIi.png" tvg-id="Rai3.it" tvg-chno="3" tvg-country="IT" group-title="Italy",Rai 3 TGR Lazio Ⓖ
 https://mediapolis.rai.it/relinker/relinkerServlet.htm?cont=4152&output=16
-#ESTINF : -1 , Rai 3 TGR Molise [317]
+#EXTINF:-1 tvg-name=" Rai 3 TGR Molise Ⓖ" tvg-logo="https://i.imgur.com/9kuQCIi.png" tvg-id="Rai3.it" tvg-chno="3" tvg-country="IT" group-title="Italy",Rai 3 TGR Molise Ⓖ
 https://mediapolis.rai.it/relinker/relinkerServlet.htm?cont=72387&output=16
-# EXTINF : -1 , Rai 3 TGR Campania [318]
+#EXTINF:-1 tvg-name=" Rai 3 TGR Campania Ⓖ" tvg-logo="https://i.imgur.com/9kuQCIi.png" tvg-id="Rai3.it" tvg-chno="3" tvg-country="IT" group-title="Italy",Rai 3 TGR Campania Ⓖ
 https://mediapolis.rai.it/relinker/relinkerServlet.htm?cont=4120&output=16
-# EXTINF : -1 , Rai 3 TGR Puglia [319]
+#EXTINF:-1 tvg-name=" Rai 3 TGR Puglia Ⓖ" tvg-logo="https://i.imgur.com/9kuQCIi.png" tvg-id="Rai3.it" tvg-chno="3" tvg-country="IT" group-title="Italy",Rai 3 TGR Puglia Ⓖ
 https://mediapolis.rai.it/relinker/relinkerServlet.htm?cont=89765&output=16
-#ESTINF : -1 , Rai 3 TGR Basilicata [320]
+#EXTINF:-1 tvg-name=" Rai 3 TGR Basilicata Ⓖ" tvg-logo="https://i.imgur.com/9kuQCIi.png" tvg-id="Rai3.it" tvg-chno="3" tvg-country="IT" group-title="Italy",Rai 3 TGR Basilicata Ⓖ
 https://mediapolis.rai.it/relinker/relinkerServlet.htm?cont=4153&output=16
-# EXTINF : -1 , Rai 3 TGR Calabria [321]
+#EXTINF:-1 tvg-name=" Rai 3 TGR Calabria Ⓖ" tvg-logo="https://i.imgur.com/9kuQCIi.png" tvg-id="Rai3.it" tvg-chno="3" tvg-country="IT" group-title="Italy",Rai 3 TGR Calabria Ⓖ
 https://mediapolis.rai.it/relinker/relinkerServlet.htm?cont=24271&output=16
-# EXTINF : -1 , Rai 3 TGR Sardegna [322]
+#EXTINF:-1 tvg-name="  Rai 3 TGR Sardegna Ⓖ" tvg-logo="https://i.imgur.com/9kuQCIi.png" tvg-id="Rai3.it" tvg-chno="3" tvg-country="IT" group-title="Italy",Rai 3 TGR Sardegna Ⓖ
 https://mediapolis.rai.it/relinker/relinkerServlet.htm?cont=18852&output=16
-#ESTINF : -1 , Rai 3 TGR Sicilia [323 ]
+#EXTINF:-1 tvg-name="  Rai 3 TGR Sicilia Ⓖ" tvg-logo="https://i.imgur.com/9kuQCIi.png" tvg-id="Rai3.it" tvg-chno="3" tvg-country="IT" group-title="Italy",Rai 3 TGR Sicilia Ⓖ
 https://mediapolis.rai.it/relinker/relinkerServlet.htm?cont=35260&output=16
 #EXTINF:-1 tvg-name="111 Tv" tvg-logo="https://i.imgur.com/4jY8yAI.png" tvg-country="IT" group-title="Italy",111 Tv
 https://5db313b643fd8.streamlock.net/111/111/playlist.m3u8
