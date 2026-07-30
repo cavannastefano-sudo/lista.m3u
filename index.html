@@ -17,7 +17,7 @@
     <div class="container mx-auto px-4 py-8">
         <header class="mb-8 text-center relative">
             <h1 class="text-3xl font-bold mb-2">📺 La mia Lista IPTV</h1>
-            <p class="text-gray-400">Visualizza e riproduci i canali dal tuo file IPTV. m3u su GitHub</p>
+            <p class="text-gray-400">Visualizza e riproduci i canali dal tuo file IPTV.m3u su GitHub</p>
             <!-- Pulsante Aggiorna in alto -->
             <button onclick="location.reload()" class="absolute top-0 right-0 bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 py-1.5 rounded text-sm flex items-center gap-1 transition">
                 🔄 Aggiorna
@@ -93,8 +93,8 @@
     </div>
 
     <script>
-        // Nome corretto con lo spazio come richiesto
-        const m3uUrl = 'IPTV. m3u'; 
+        // URL completo con il nome del file senza spazio (IPTV.m3u)
+        const m3uUrl = 'https://cavannastefano-sudo.github.io/lista.m3u/IPTV.m3u'; 
         let channels = [];
         let filteredChannelsCache = []; 
         let currentFullscreenIndex = 0; 
@@ -121,7 +121,7 @@
                 filterChannels();
             } catch (error) {
                 console.error('Errore:', error);
-                document.getElementById('channelsContainer').innerHTML = `<p class="text-red-500 text-center">Errore: ${error.message}. Assicurati che <b>IPTV. m3u</b> sia nella stessa cartella di index.html.</p>`;
+                document.getElementById('channelsContainer').innerHTML = `<p class="text-red-500 text-center">Errore: ${error.message}. Assicurati che <b>IPTV.m3u</b> sia caricato correttamente.</p>`;
             }
         }
 
