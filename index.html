@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IPTV Web Viewer</title>
-    <!-- Tailwind CSS per uno stile moderno e responsive -->
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <!-- HLS.js per la riproduzione di flussi m3u8 nei browser compatibili -->
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 </head>
 <body class="bg-gray-900 text-white min-h-screen">
@@ -26,7 +24,7 @@
             </select>
         </div>
 
-        <!-- Sezione Player Video (nascosta finché non si clicca un canale) -->
+        <!-- Sezione Player Video -->
         <div id="playerContainer" class="hidden mb-8 bg-black p-4 rounded-lg shadow-lg relative">
             <div class="flex justify-between items-center mb-2">
                 <h3 id="currentChannelTitle" class="text-lg font-semibold text-blue-400"></h3>
@@ -37,34 +35,38 @@
 
         <!-- Griglia dei Canali -->
         <div id="channelsGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            <!-- I canali verranno inseriti qui dinamicamente -->
+            <p class="text-gray-400 col-span-full text-center">Caricamento canali in corso...</p>
         </div>
     </div>
 
     <script>
-        // Nome esatto del file M3U nel repository (maiuscole/minuscole rispettate)
         const m3uUrl = 'IPTV.m3u'; 
-
         let channels = [];
 
         async function loadPlaylist() {
             try {
                 const response = await fetch(m3uUrl);
                 if (!response.ok) {
-                    throw new Error(`Errore HTTP: ${response.status}`);
+                    throw new Error(`File non trovato o errore HTTP (${response.status})`);
                 }
                 const data = await response.text();
                 parseM3U(data);
+                
+                if (channels.length === 0) {
+                    document.getElementById('channelsGrid').innerHTML = '<p class="text-yellow-500 col-span-full text-center">File letto, ma nessun canale trovato. Controlla che il file inizi con #EXTM3U e contenga le righe #EXTINF:</p>';
+                    return;
+                }
+
                 populateGroups();
                 renderChannels(channels);
             } catch (error) {
-                console.error('Errore nel caricamento della playlist:', error);
-                document.getElementById('channelsGrid').innerHTML = '<p class="text-red-500 col-span-full text-center">Errore 404: Impossibile trovare il file <b>IPTV.m3u</b> nella stessa cartella di index.html o problemi di permessi.</p>';
+                console.error('Errore:', error);
+                document.getElementById('channelsGrid').innerHTML = `<p class="text-red-500 col-span-full text-center">Errore: ${error.message}. Assicurati che <b>IPTV.m3u</b> sia nella stessa cartella di index.html.</p>`;
             }
         }
 
         function parseM3U(data) {
-            const lines = data.split('\n');
+            const lines = data.split(/\r?\n/);
             let currentChannel = {};
 
             for (let i = 0; i < lines.length; i++) {
@@ -73,15 +75,12 @@
                 if (line.startsWith('#EXTINF:')) {
                     currentChannel = {};
                     
-                    // Estrai Logo
                     let logoMatch = line.match(/tvg-logo="([^"]*)"/);
                     currentChannel.logo = logoMatch ? logoMatch[1] : '';
 
-                    // Estrai Gruppo
                     let groupMatch = line.match(/group-title="([^"]*)"/);
                     currentChannel.group = groupMatch ? groupMatch[1] : 'Altro';
 
-                    // Estrai Nome Canale (dopo l'ultima virgola)
                     let nameParts = line.split(',');
                     currentChannel.name = nameParts[nameParts.length - 1].trim();
                 } else if (line && !line.startsWith('#')) {
@@ -109,7 +108,7 @@
             grid.innerHTML = '';
 
             if (channelsToRender.length === 0) {
-                grid.innerHTML = '<p class="text-gray-400 col-span-full text-center">Nessun canale trovato.</p>';
+                grid.innerHTML = '<p class="text-gray-400 col-span-full text-center">Nessun canale corrisponde alla ricerca.</p>';
                 return;
             }
 
@@ -142,7 +141,6 @@
             playerContainer.classList.remove('hidden');
             window.scrollTo({ top: 0, behavior: 'smooth' });
 
-            // Gestione flussi HLS (.m3u8) o standard
             if (Hls.isSupported() && url.includes('.m3u8')) {
                 if (window.hls) {
                     window.hls.destroy();
@@ -170,12 +168,11 @@
             document.getElementById('playerContainer').classList.add('hidden');
         }
 
-        // Filtri di ricerca
         document.getElementById('searchInput').addEventListener('input', filterChannels);
         document.getElementById('groupSelect').addEventListener('change', filterChannels);
 
         function filterChannels() {
-            const search = document.getElementById('searchInput`+'\').value.toLowerCase();'+`
+            const search = document.getElementById('searchInput').value.toLowerCase();
             const group = document.getElementById('groupSelect').value;
 
             const filtered = channels.filter(channel => {
