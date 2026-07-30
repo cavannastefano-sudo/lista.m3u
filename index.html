@@ -14,7 +14,7 @@
     <div class="container mx-auto px-4 py-8">
         <header class="mb-8 text-center">
             <h1 class="text-3xl font-bold mb-2">📺 La mia Lista IPTV</h1>
-            <p class="text-gray-400">Visualizza e riproduci i canali dal tuo file M3U su GitHub</p>
+            <p class="text-gray-400">Visualizza e riproduci i canali dal tuo file IPTV.m3u su GitHub</p>
         </header>
 
         <!-- Barra di ricerca e Filtro Gruppi -->
@@ -42,21 +42,24 @@
     </div>
 
     <script>
-        // Sostituisci questo link con il "Raw" del tuo file IPTV.M3U su GitHub o il link relativo se sono nella stessa cartella
-        const m3uUrl = 'IPTV.M3U'; 
+        // Nome esatto del file M3U nel repository (maiuscole/minuscole rispettate)
+        const m3uUrl = 'IPTV.m3u'; 
 
         let channels = [];
 
         async function loadPlaylist() {
             try {
                 const response = await fetch(m3uUrl);
+                if (!response.ok) {
+                    throw new Error(`Errore HTTP: ${response.status}`);
+                }
                 const data = await response.text();
                 parseM3U(data);
                 populateGroups();
                 renderChannels(channels);
             } catch (error) {
                 console.error('Errore nel caricamento della playlist:', error);
-                document.getElementById('channelsGrid').innerHTML = '<p class="text-red-500 col-span-full text-center">Errore nel caricamento del file IPTV.M3U. Controlla il percorso o i permessi CORS.</p>';
+                document.getElementById('channelsGrid').innerHTML = '<p class="text-red-500 col-span-full text-center">Errore 404: Impossibile trovare il file <b>IPTV.m3u</b> nella stessa cartella di index.html o problemi di permessi.</p>';
             }
         }
 
@@ -172,7 +175,7 @@
         document.getElementById('groupSelect').addEventListener('change', filterChannels);
 
         function filterChannels() {
-            const search = document.getElementById('searchInput').value.toLowerCase();
+            const search = document.getElementById('searchInput`+'\').value.toLowerCase();'+`
             const group = document.getElementById('groupSelect').value;
 
             const filtered = channels.filter(channel => {
