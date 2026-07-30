@@ -10,9 +10,13 @@
 <body class="bg-gray-900 text-white min-h-screen">
 
     <div class="container mx-auto px-4 py-8">
-        <header class="mb-8 text-center">
+        <header class="mb-8 text-center relative">
             <h1 class="text-3xl font-bold mb-2">📺 La mia Lista IPTV</h1>
             <p class="text-gray-400">Visualizza e riproduci i canali dal tuo file IPTV.m3u su GitHub</p>
+            <!-- Pulsante Aggiorna in alto -->
+            <button onclick="location.reload()" class="absolute top-0 right-0 bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 py-1.5 rounded text-sm flex items-center gap-1 transition">
+                🔄 Aggiorna
+            </button>
         </header>
 
         <!-- Barra di ricerca, Filtro Gruppi e Toggle Vista -->
@@ -49,8 +53,9 @@
         const m3uUrl = 'IPTV.m3u'; 
         let channels = [];
         
-        // Legge la vista salvata in precedenza, altrimenti imposta 'grid' come predefinita
+        // Legge le preferenze salvate dal browser
         let currentView = localStorage.getItem('iptv_view_mode') || 'grid';
+        let savedGroup = localStorage.getItem('iptv_selected_group') || '';
 
         async function loadPlaylist() {
             try {
@@ -105,17 +110,22 @@
         function populateGroups() {
             const groups = [...new Set(channels.map(c => c.group))].sort();
             const select = document.getElementById('groupSelect');
+            
             groups.forEach(group => {
                 const option = document.createElement('option');
                 option.value = group;
                 option.textContent = group;
                 select.appendChild(option);
             });
+
+            // Ripristina il gruppo salvato se esiste ancora nella lista
+            if (savedGroup) {
+                select.value = savedGroup;
+            }
         }
 
         function setViewMode(mode) {
             currentView = mode;
-            // Salva la scelta nella memoria del browser
             localStorage.setItem('iptv_view_mode', mode);
             updateViewButtons();
             filterChannels();
@@ -139,7 +149,7 @@
             container.innerHTML = '';
 
             if (channelsToRender.length === 0) {
-                container.innerHTML = '<p class="text-gray-400 text-center">Nessun canale corrisponde alla ricerca.</p>';
+                container.innerHTML = '<p class="text-gray-400 text-center">Nessun canale corrisponde ai criteri.</p>';
                 return;
             }
 
@@ -240,7 +250,12 @@
         }
 
         document.getElementById('searchInput').addEventListener('input', filterChannels);
-        document.getElementById('groupSelect').addEventListener('change', filterChannels);
+        
+        document.getElementById('groupSelect').addEventListener('change', function() {
+            // Salva il gruppo scelto nella memoria locale
+            localStorage.setItem('iptv_selected_group', this.value);
+            filterChannels();
+        });
 
         function filterChannels() {
             const search = document.getElementById('searchInput').value.toLowerCase();
