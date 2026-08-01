@@ -11,6 +11,8 @@
     <!-- Manifest per installazione PWA / App Chrome -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#111827">
+    <meta name="color-scheme" content="dark">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
 <body class="bg-gray-900 text-white min-h-screen">
 
@@ -159,6 +161,7 @@
         }
 
         function setViewMode(mode) {
+            stopAllPlayers();
             currentView = mode;
             localStorage.setItem('iptv_view_mode', mode);
             updateViewButtons();
@@ -176,6 +179,35 @@
                 btnList.className = 'px-4 py-2 rounded bg-blue-600 text-white font-medium text-sm transition';
                 btnGrid.className = 'px-4 py-2 rounded bg-gray-800 text-gray-400 font-medium text-sm hover:bg-gray-700 transition';
             }
+        }
+
+        // Funzione per spegnere tutti i video attivi ed evitare sovrapposizioni audio
+        function stopAllPlayers() {
+            document.querySelectorAll('video').forEach(video => {
+                video.pause();
+                video.src = '';
+            });
+
+            // Distrugge tutte le istanze di HLS per fermare lo streaming in sottofondo
+            if (window.hlsInstances) {
+                Object.keys(window.hlsInstances).forEach(key => {
+                    if (window.hlsInstances[key]) {
+                        window.hlsInstances[key].destroy();
+                        delete window.hlsInstances[key];
+                    }
+                });
+            } else {
+                window.hlsInstances = {};
+            }
+
+            // Nasconde tutti i contenitori di player aperti
+            document.querySelectorAll('[id^="inline-player-"]').forEach(el => {
+                el.classList.add('hidden');
+                el.innerHTML = '';
+            });
+            document.querySelectorAll('[id^="inline-row-"]').forEach(el => {
+                el.classList.add('hidden');
+            });
         }
 
         function renderChannels(channelsToRender) {
@@ -210,7 +242,6 @@
                     `;
                     wrapper.appendChild(card);
 
-                    // Contenitore player incorporato sotto la card
                     const inlinePlayerDiv = document.createElement('div');
                     inlinePlayerDiv.id = `inline-player-${index}`;
                     inlinePlayerDiv.className = 'hidden mt-2 bg-black p-3 rounded-lg shadow-lg relative col-span-full';
@@ -256,7 +287,6 @@
                     `;
                     tbody.appendChild(tr);
 
-                    // Riga aggiuntiva per il player incorporato nella tabella
                     const trPlayer = document.createElement('tr');
                     trPlayer.id = `inline-row-${index}`;
                     trPlayer.className = 'hidden bg-black';
@@ -274,15 +304,12 @@
             }
         }
 
-        // Player incorporato direttamente sotto il canale cliccato
+        // Player incorporato con chiusura automatica dei player precedenti
         function toggleInlinePlayer(index, url, name) {
-            if (currentView === 'grid') {
-                // Chiude eventuali altri player aperti nella griglia
-                document.querySelectorAll('[id^="inline-player-"]').forEach(el => {
-                    el.classList.add('hidden');
-                    el.innerHTML = '';
-                });
+            // Spegne qualsiasi canale attivo prima di aprire il nuovo
+            stopAllPlayers();
 
+            if (currentView === 'grid') {
                 const playerDiv = document.getElementById(`inline-player-${index}`);
                 playerDiv.classList.remove('hidden');
                 playerDiv.innerHTML = `
@@ -297,9 +324,6 @@
                 loadVideoSource(video, url, false, index);
 
             } else {
-                // Gestione per la vista elenco (tabella)
-                document.querySelectorAll('[id^="inline-row-"]').forEach(el => el.classList.add('hidden'));
-                
                 const rowPlayer = document.getElementById(`inline-row-${index}`);
                 const title = document.getElementById(`inline-title-${index}`);
                 const video = document.getElementById(`inline-video-${index}`);
@@ -311,27 +335,13 @@
         }
 
         function closeInlinePlayer(index) {
-            if (currentView === 'grid') {
-                const playerDiv = document.getElementById(`inline-player-${index}`);
-                if (playerDiv) {
-                    const video = playerDiv.querySelector('video');
-                    if (video) { video.pause(); video.src = ''; }
-                    playerDiv.classList.add('hidden');
-                    playerDiv.innerHTML = '';
-                }
-            } else {
-                const rowPlayer = document.getElementById(`inline-row-${index}`);
-                const video = document.getElementById(`inline-video-${index}`);
-                if (video) { video.pause(); video.src = ''; }
-                if (rowPlayer) rowPlayer.classList.add('hidden');
-            }
-            if (window[`hlsInline_${index}`]) {
-                window[`hlsInline_${index}`].destroy();
-            }
+            stopAllPlayers();
         }
 
-        // Player a Tutto Schermo tramite Indice
+        // Player a Tutto Schermo
         function playFullscreenByIndex(index) {
+            stopAllPlayers();
+            
             currentFullscreenIndex = index;
             const channel = filteredChannelsCache[currentFullscreenIndex];
             if (!channel) return;
@@ -348,18 +358,11 @@
         }
 
         function closeFullscreenPlayer() {
-            const modal = document.getElementById('fullscreenModal');
-            const video = document.getElementById('fullscreenVideoPlayer');
-            video.pause();
-            video.src = '';
-            if (window.hlsFullscreen) {
-                window.hlsFullscreen.destroy();
-            }
-            modal.classList.add('hidden');
+            stopAllPlayers();
+            document.getElementById('fullscreenModal').classList.add('hidden');
             document.getElementById('channelDrawer').classList.add('translate-x-full');
         }
 
-        // Gestione Tendina Canali (Drawer)
         function toggleChannelDrawer() {
             const drawer = document.getElementById('channelDrawer');
             drawer.classList.toggle('translate-x-full');
@@ -395,7 +398,6 @@
             renderDrawerList(this.value);
         });
 
-        // Gestione Swipe sul Player Fullscreen
         let touchStartX = 0;
         let touchStartY = 0;
         let touchEndX = 0;
@@ -448,33 +450,31 @@
             playFullscreenByIndex(currentFullscreenIndex);
         }
 
-        // Gestione unificata HLS
-        function loadVideoSource(videoElement, url, isFullscreen = false, index = 0) {
+        function loadVideoSource(videoElement, url, isFullscreen = false, index = 'fs') {
+            if (!window.hlsInstances) window.hlsInstances = {};
+
             if (Hls.isSupported() && url.includes('.m3u8')) {
-                if (isFullscreen) {
-                    if (window.hlsFullscreen) window.hlsFullscreen.destroy();
-                    const hls = new Hls();
-                    window.hlsFullscreen = hls;
-                    hls.loadSource(url);
-                    hls.attachMedia(videoElement);
-                    hls.on(Hls.Events.MANIFEST_PARSED, () => videoElement.play());
-                } else {
-                    if (window[`hlsInline_${index}`]) window[`hlsInline_${index}`].destroy();
-                    const hls = new Hls();
-                    window[`hlsInline_${index}`] = hls;
-                    hls.loadSource(url);
-                    hls.attachMedia(videoElement);
-                    hls.on(Hls.Events.MANIFEST_PARSED, () => videoElement.play());
+                if (window.hlsInstances[index]) {
+                    window.hlsInstances[index].destroy();
                 }
+                const hls = new Hls();
+                window.hlsInstances[index] = hls;
+                hls.loadSource(url);
+                hls.attachMedia(videoElement);
+                hls.on(Hls.Events.MANIFEST_PARSED, () => videoElement.play());
             } else {
                 videoElement.src = url;
                 videoElement.play();
             }
         }
 
-        document.getElementById('searchInput').addEventListener('input', filterChannels);
+        document.getElementById('searchInput').addEventListener('input', () => {
+            stopAllPlayers();
+            filterChannels();
+        });
         
         document.getElementById('groupSelect').addEventListener('change', function() {
+            stopAllPlayers();
             localStorage.setItem('iptv_selected_group', this.value);
             filterChannels();
         });
