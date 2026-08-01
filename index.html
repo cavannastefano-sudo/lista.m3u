@@ -39,15 +39,6 @@
             </div>
         </div>
 
-        <!-- Sezione Player Video Classico -->
-        <div id="playerContainer" class="hidden mb-8 bg-black p-4 rounded-lg shadow-lg relative">
-            <div class="flex justify-between items-center mb-2">
-                <h3 id="currentChannelTitle" class="text-lg font-semibold text-blue-400"></h3>
-                <button onclick="closePlayer()" class="text-gray-400 hover:text-white px-2 py-1 bg-gray-800 rounded">Chiudi ✕</button>
-            </div>
-            <video id="videoPlayer" controls autoplay class="w-full max-h-96 rounded bg-black"></video>
-        </div>
-
         <!-- Contenitore Canali -->
         <div id="channelsContainer">
             <p class="text-gray-400 text-center">Caricamento canali in corso...</p>
@@ -93,7 +84,6 @@
     </div>
 
     <script>
-        // URL completo con il nome del file senza spazio (IPTV.m3u)
         const m3uUrl = 'https://cavannastefano-sudo.github.io/lista.m3u/IPTV.m3u'; 
         let channels = [];
         let filteredChannelsCache = []; 
@@ -202,12 +192,15 @@
                 gridDiv.className = 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4';
 
                 channelsToRender.forEach((channel, index) => {
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'flex flex-col col-span-1';
+
                     const card = document.createElement('div');
                     card.className = 'bg-gray-800 rounded-lg p-4 flex items-center justify-between shadow hover:bg-gray-700 transition cursor-pointer';
                     
                     card.innerHTML = `
-                        <div class="flex items-center space-x-3 overflow-hidden flex-grow" onclick="playStream('${channel.url}', '${channel.name.replace(/'/g, "\\'")}')">
-                            <img src="${channel.logo}" alt="" class="w-10 h-10 object-contain bg-white rounded p-1 flex-shrink-0" onerror="this.src='https://via.placeholder.com/40?text=TV'">
+                        <div class="flex items-center space-x-3 overflow-hidden flex-grow" onclick="toggleInlinePlayer(${index}, '${channel.url}', '${channel.name.replace(/'/g, "\\'")}')">
+                            <img src="${channel.logo}" alt="" class="w-10 h-10 object-contain bg-transparent rounded p-1 flex-shrink-0" onerror="this.src='https://via.placeholder.com/40?text=TV'">
                             <div class="truncate">
                                 <h4 class="font-medium text-sm truncate">${channel.name}</h4>
                                 <span class="text-xs text-gray-400">${channel.group}</span>
@@ -215,69 +208,126 @@
                         </div>
                         <button onclick="playFullscreenByIndex(${index})" class="bg-blue-600 hover:bg-blue-500 text-xs px-3 py-1.5 rounded flex-shrink-0 ml-2">Riproduci</button>
                     `;
-                    gridDiv.appendChild(card);
+                    wrapper.appendChild(card);
+
+                    // Contenitore player incorporato sotto la card
+                    const inlinePlayerDiv = document.createElement('div');
+                    inlinePlayerDiv.id = `inline-player-${index}`;
+                    inlinePlayerDiv.className = 'hidden mt-2 bg-black p-3 rounded-lg shadow-lg relative col-span-full';
+                    wrapper.appendChild(inlinePlayerDiv);
+
+                    gridDiv.appendChild(wrapper);
                 });
                 container.appendChild(gridDiv);
 
             } else {
                 const tableWrapper = document.createElement('div');
-                tableWrapper.className = 'overflow-x-auto bg-gray-800 rounded-lg shadow';
+                tableWrapper.className = 'bg-gray-800 rounded-lg shadow overflow-hidden';
                 
-                let tableHTML = `
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="border-b border-gray-700 text-gray-400 text-xs uppercase">
-                                <th class="p-3 w-16 text-center">Logo</th>
-                                <th class="p-3">Nome Canale</th>
-                                <th class="p-3">Categoria</th>
-                                <th class="p-3 text-right">Azione</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-700 text-sm">
-                `;
-
-                channelsToRender.forEach((channel, index) => {
-                    tableHTML += `
-                        <tr class="hover:bg-gray-750 transition">
-                            <td class="p-3 text-center cursor-pointer" onclick="playStream('${channel.url}', '${channel.name.replace(/'/g, "\\'")}')">
-                                <img src="${channel.logo}" alt="" class="w-8 h-8 object-contain bg-white rounded p-0.5 mx-auto" onerror="this.src='https://via.placeholder.com/32?text=TV'">
-                            </td>
-                            <td class="p-3 font-medium truncate max-w-xs cursor-pointer" onclick="playStream('${channel.url}', '${channel.name.replace(/'/g, "\\'")}')">${channel.name}</td>
-                            <td class="p-3 text-gray-400 text-xs cursor-pointer" onclick="playStream('${channel.url}', '${channel.name.replace(/'/g, "\\'")}')">${channel.group}</td>
-                            <td class="p-3 text-right">
-                                <button onclick="playFullscreenByIndex(${index})" class="bg-blue-600 hover:bg-blue-500 text-xs px-3 py-1 rounded">Riproduci</button>
-                            </td>
+                const table = document.createElement('table');
+                table.className = 'w-full text-left border-collapse';
+                table.innerHTML = `
+                    <thead>
+                        <tr class="border-b border-gray-700 text-gray-400 text-xs uppercase">
+                            <th class="p-3 w-16 text-center">Logo</th>
+                            <th class="p-3">Nome Canale</th>
+                            <th class="p-3">Categoria</th>
+                            <th class="p-3 text-right">Azione</th>
                         </tr>
+                    </thead>
+                    <tbody id="tableBody" class="divide-y divide-gray-700 text-sm"></tbody>
+                `;
+                tableWrapper.appendChild(table);
+                container.appendChild(tableWrapper);
+
+                const tbody = document.getElementById('tableBody');
+                channelsToRender.forEach((channel, index) => {
+                    const tr = document.createElement('tr');
+                    tr.className = 'hover:bg-gray-750 transition';
+                    tr.innerHTML = `
+                        <td class="p-3 text-center cursor-pointer" onclick="toggleInlinePlayer(${index}, '${channel.url}', '${channel.name.replace(/'/g, "\\'")}')">
+                            <img src="${channel.logo}" alt="" class="w-8 h-8 object-contain bg-transparent rounded p-0.5 mx-auto" onerror="this.src='https://via.placeholder.com/32?text=TV'">
+                        </td>
+                        <td class="p-3 font-medium truncate max-w-xs cursor-pointer" onclick="toggleInlinePlayer(${index}, '${channel.url}', '${channel.name.replace(/'/g, "\\'")}')">${channel.name}</td>
+                        <td class="p-3 text-gray-400 text-xs cursor-pointer" onclick="toggleInlinePlayer(${index}, '${channel.url}', '${channel.name.replace(/'/g, "\\'")}')">${channel.group}</td>
+                        <td class="p-3 text-right">
+                            <button onclick="playFullscreenByIndex(${index})" class="bg-blue-600 hover:bg-blue-500 text-xs px-3 py-1 rounded">Riproduci</button>
+                        </td>
                     `;
+                    tbody.appendChild(tr);
+
+                    // Riga aggiuntiva per il player incorporato nella tabella
+                    const trPlayer = document.createElement('tr');
+                    trPlayer.id = `inline-row-${index}`;
+                    trPlayer.className = 'hidden bg-black';
+                    trPlayer.innerHTML = `
+                        <td colspan="4" class="p-4">
+                            <div class="flex justify-between items-center mb-2">
+                                <h3 id="inline-title-${index}" class="text-sm font-semibold text-blue-400"></h3>
+                                <button onclick="closeInlinePlayer(${index})" class="text-gray-400 hover:text-white px-2 py-0.5 bg-gray-800 rounded text-xs">Chiudi ✕</button>
+                            </div>
+                            <video id="inline-video-${index}" controls autoplay class="w-full max-h-72 rounded bg-black"></video>
+                        </td>
+                    `;
+                    tbody.appendChild(trPlayer);
+                });
+            }
+        }
+
+        // Player incorporato direttamente sotto il canale cliccato
+        function toggleInlinePlayer(index, url, name) {
+            if (currentView === 'grid') {
+                // Chiude eventuali altri player aperti nella griglia
+                document.querySelectorAll('[id^="inline-player-"]').forEach(el => {
+                    el.classList.add('hidden');
+                    el.innerHTML = '';
                 });
 
-                tableHTML += `</tbody></table>`;
-                tableWrapper.innerHTML = tableHTML;
-                container.appendChild(tableWrapper);
+                const playerDiv = document.getElementById(`inline-player-${index}`);
+                playerDiv.classList.remove('hidden');
+                playerDiv.innerHTML = `
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="text-sm font-semibold text-blue-400">${name}</h3>
+                        <button onclick="closeInlinePlayer(${index})" class="text-gray-400 hover:text-white px-2 py-0.5 bg-gray-800 rounded text-xs">Chiudi ✕</button>
+                    </div>
+                    <video id="inline-video-${index}" controls autoplay class="w-full max-h-72 rounded bg-black"></video>
+                `;
+
+                const video = document.getElementById(`inline-video-${index}`);
+                loadVideoSource(video, url, false, index);
+
+            } else {
+                // Gestione per la vista elenco (tabella)
+                document.querySelectorAll('[id^="inline-row-"]').forEach(el => el.classList.add('hidden'));
+                
+                const rowPlayer = document.getElementById(`inline-row-${index}`);
+                const title = document.getElementById(`inline-title-${index}`);
+                const video = document.getElementById(`inline-video-${index}`);
+
+                title.textContent = name;
+                rowPlayer.classList.remove('hidden');
+                loadVideoSource(video, url, false, index);
             }
         }
 
-        // Player Classico (In basso)
-        function playStream(url, name) {
-            const playerContainer = document.getElementById('playerContainer');
-            const video = document.getElementById('videoPlayer');
-            const title = document.getElementById('currentChannelTitle');
-
-            title.textContent = name;
-            playerContainer.classList.remove('hidden');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-
-            loadVideoSource(video, url);
-        }
-
-        function closePlayer() {
-            const video = document.getElementById('videoPlayer');
-            video.pause();
-            video.src = '';
-            if (window.hlsClassic) {
-                window.hlsClassic.destroy();
+        function closeInlinePlayer(index) {
+            if (currentView === 'grid') {
+                const playerDiv = document.getElementById(`inline-player-${index}`);
+                if (playerDiv) {
+                    const video = playerDiv.querySelector('video');
+                    if (video) { video.pause(); video.src = ''; }
+                    playerDiv.classList.add('hidden');
+                    playerDiv.innerHTML = '';
+                }
+            } else {
+                const rowPlayer = document.getElementById(`inline-row-${index}`);
+                const video = document.getElementById(`inline-video-${index}`);
+                if (video) { video.pause(); video.src = ''; }
+                if (rowPlayer) rowPlayer.classList.add('hidden');
             }
-            document.getElementById('playerContainer').classList.add('hidden');
+            if (window[`hlsInline_${index}`]) {
+                window[`hlsInline_${index}`].destroy();
+            }
         }
 
         // Player a Tutto Schermo tramite Indice
@@ -327,7 +377,7 @@
                 const item = document.createElement('div');
                 item.className = `p-2.5 flex items-center gap-2 hover:bg-gray-800 cursor-pointer transition ${index === currentFullscreenIndex ? 'bg-blue-900 bg-opacity-40 border-l-4 border-blue-500' : ''}`;
                 item.innerHTML = `
-                    <img src="${channel.logo}" alt="" class="w-7 h-7 object-contain bg-white rounded p-0.5 flex-shrink-0" onerror="this.src='https://via.placeholder.com/28?text=TV'">
+                    <img src="${channel.logo}" alt="" class="w-7 h-7 object-contain bg-transparent rounded p-0.5 flex-shrink-0" onerror="this.src='https://via.placeholder.com/28?text=TV'">
                     <div class="truncate flex-grow">
                         <div class="font-medium text-xs truncate ${index === currentFullscreenIndex ? 'text-blue-400 font-bold' : ''}">${channel.name}</div>
                         <div class="text-[10px] text-gray-400">${channel.group}</div>
@@ -399,7 +449,7 @@
         }
 
         // Gestione unificata HLS
-        function loadVideoSource(videoElement, url, isFullscreen = false) {
+        function loadVideoSource(videoElement, url, isFullscreen = false, index = 0) {
             if (Hls.isSupported() && url.includes('.m3u8')) {
                 if (isFullscreen) {
                     if (window.hlsFullscreen) window.hlsFullscreen.destroy();
@@ -409,9 +459,9 @@
                     hls.attachMedia(videoElement);
                     hls.on(Hls.Events.MANIFEST_PARSED, () => videoElement.play());
                 } else {
-                    if (window.hlsClassic) window.hlsClassic.destroy();
+                    if (window[`hlsInline_${index}`]) window[`hlsInline_${index}`].destroy();
                     const hls = new Hls();
-                    window.hlsClassic = hls;
+                    window[`hlsInline_${index}`] = hls;
                     hls.loadSource(url);
                     hls.attachMedia(videoElement);
                     hls.on(Hls.Events.MANIFEST_PARSED, () => videoElement.play());
