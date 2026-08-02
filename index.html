@@ -13,6 +13,12 @@
     <meta name="theme-color" content="#111827">
     <meta name="color-scheme" content="dark">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <style>
+        /* Rende trasparente la barra di navigazione inferiore su Android/Chrome */
+        body {
+            navigation-bar-color: transparent;
+        }
+    </style>
 </head>
 <body class="bg-gray-900 text-white min-h-screen">
 
@@ -181,14 +187,12 @@
             }
         }
 
-        // Funzione per spegnere tutti i video attivi ed evitare sovrapposizioni audio
         function stopAllPlayers() {
             document.querySelectorAll('video').forEach(video => {
                 video.pause();
                 video.src = '';
             });
 
-            // Distrugge tutte le istanze di HLS per fermare lo streaming in sottofondo
             if (window.hlsInstances) {
                 Object.keys(window.hlsInstances).forEach(key => {
                     if (window.hlsInstances[key]) {
@@ -200,7 +204,6 @@
                 window.hlsInstances = {};
             }
 
-            // Nasconde tutti i contenitori di player aperti
             document.querySelectorAll('[id^="inline-player-"]').forEach(el => {
                 el.classList.add('hidden');
                 el.innerHTML = '';
@@ -304,9 +307,7 @@
             }
         }
 
-        // Player incorporato con chiusura automatica dei player precedenti
         function toggleInlinePlayer(index, url, name) {
-            // Spegne qualsiasi canale attivo prima di aprire il nuovo
             stopAllPlayers();
 
             if (currentView === 'grid') {
@@ -338,7 +339,6 @@
             stopAllPlayers();
         }
 
-        // Player a Tutto Schermo
         function playFullscreenByIndex(index) {
             stopAllPlayers();
             
