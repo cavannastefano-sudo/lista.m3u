@@ -19,17 +19,11 @@
     <div class="container mx-auto px-4 py-8">
         <header class="mb-8 text-center relative">
             <h1 class="text-3xl font-bold mb-2">📺 IPTV</h1>
-            <p class="text-gray-400">Visualizza e riproduci i canali IPTV</p>
-            
-            <!-- Pulsanti in alto a destra -->
-            <div class="absolute top-0 right-0 flex gap-2">
-                <button onclick="openEpgModal()" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded text-sm flex items-center gap-1 transition">
-                    ⚙️ Gestione EPG
-                </button>
-                <button onclick="location.reload()" class="bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 py-1.5 rounded text-sm flex items-center gap-1 transition">
-                    🔄 Aggiorna
-                </button>
-            </div>
+            <p class="text-gray-400">Visualizza e riproduci i canali dal tuo file IPTV.m3u su GitHub</p>
+            <!-- Pulsante Aggiorna in alto -->
+            <button onclick="location.reload()" class="absolute top-0 right-0 bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 py-1.5 rounded text-sm flex items-center gap-1 transition">
+                🔄 Aggiorna
+            </button>
         </header>
 
         <!-- Barra di ricerca, Filtro Gruppi e Toggle Vista -->
@@ -50,33 +44,6 @@
         <!-- Contenitore Canali -->
         <div id="channelsContainer">
             <p class="text-gray-400 text-center">Caricamento canali e guida TV in corso...</p>
-        </div>
-    </div>
-
-    <!-- Modale per Gestione, Modifica e Aggiornamento EPG -->
-    <div id="epgModal" class="fixed inset-0 bg-black bg-opacity-80 z-50 hidden flex justify-center items-center p-4">
-        <div class="bg-gray-800 w-full max-w-lg rounded-lg p-6 flex flex-col shadow-2xl border border-gray-700">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-bold text-blue-400">Gestione Guida TV (EPG)</h3>
-                <button onclick="closeEpgModal()" class="text-gray-400 hover:text-white text-lg">✕</button>
-            </div>
-            
-            <!-- Box Stato EPG -->
-            <div class="bg-gray-900 p-3 rounded mb-4 border border-gray-700 text-xs flex flex-col gap-1">
-                <div><span class="text-gray-400">Stato:</span> <strong id="epgStatusText" class="text-yellow-400">In attesa...</strong></div>
-                <div><span class="text-gray-400">Canali con EPG attiva:</span> <strong id="epgCountStatus" class="text-blue-400">0</strong></div>
-            </div>
-
-            <label class="text-xs text-gray-400 mb-1">Modifica Link EPG (XML / XMLTV):</label>
-            <input type="text" id="epgUrlInput" class="w-full p-2.5 rounded bg-gray-900 border border-gray-700 text-xs text-white focus:outline-none focus:border-blue-500 mb-4">
-            
-            <div class="flex justify-between items-center">
-                <button onclick="resetEpgUrl()" class="bg-gray-700 hover:bg-gray-600 text-white text-xs px-3 py-2 rounded transition">Ripristina Default</button>
-                <div class="flex gap-2">
-                    <button onclick="closeEpgModal()" class="bg-gray-700 hover:bg-gray-600 text-white text-xs px-4 py-2 rounded transition">Chiudi</button>
-                    <button onclick="saveAndReloadEpg()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs px-4 py-2 rounded transition">Aggiorna EPG</button>
-                </div>
-            </div>
         </div>
     </div>
 
@@ -119,11 +86,11 @@
     </div>
 
     <script>
-        const defaultM3uUrl = 'https://cavannastefano-sudo.github.io/lista.m3u/IPTV.m3u'; 
-        const defaultEpgUrl = 'http://rebrand.ly/epgitalia';
+        const m3uUrl = 'https://cavannastefano-sudo.github.io/lista.m3u/IPTV.m3u'; 
+        const epgUrl = 'http://rebrand.ly/epgitalia';
         
         let channels = [];
-        let epgData = {}; 
+        let epgData = {}; // Memorizza i programmi EPG per tvg-id o nome
         let filteredChannelsCache = []; 
         let currentFullscreenIndex = 0; 
         
@@ -136,12 +103,11 @@
         }
 
         async function loadEpg() {
-            const activeEpgUrl = localStorage.getItem('iptv_custom_epg') || defaultEpgUrl;
             try {
-                document.getElementById('epgStatusText').textContent = "Scaricamento in corso...";
-                const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(activeEpgUrl);
+                // Utilizziamo un proxy CORS pubblico per leggere il file XML esterno dal browser
+                const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(epgUrl);
                 const response = await fetch(proxyUrl);
-                if (!response.ok) throw new Error("Errore HTTP EPG");
+                if (!response.ok) return;
                 const xmlText = await response.text();
                 
                 const parser = new DOMParser();
@@ -149,11 +115,10 @@
                 const programmes = xmlDoc.getElementsByTagName("programme");
                 
                 const now = new Date();
-                let loadedCount = 0;
 
                 for (let prog of programmes) {
                     const channelId = prog.getAttribute("channel");
-                    const startStr = prog.getAttribute("start"); 
+                    const startStr = prog.getAttribute("start"); // Formato YYYYMMDDHHMMSS +ZZZZ
                     const stopStr = prog.getAttribute("stop");
                     const titleElem = prog.getElementsByTagName("title")[0];
                     
@@ -164,17 +129,13 @@
                         if (now >= startDate && now <= stopDate) {
                             if (!epgData[channelId]) {
                                 epgData[channelId] = [];
-                                loadedCount++;
                             }
                             epgData[channelId].push(titleElem.textContent);
                         }
                     }
                 }
-                document.getElementById('epgStatusText').textContent = "Guida TV attiva e aggiornata";
-                document.getElementById('epgCountStatus').textContent = loadedCount + " canali mappati";
             } catch (e) {
                 console.warn("Impossibile caricare la guida TV EPG:", e);
-                document.getElementById('epgStatusText').textContent = "Errore di caricamento EPG";
             }
         }
 
@@ -185,20 +146,20 @@
             const hour = parseInt(str.substr(8, 2), 10);
             const minute = parseInt(str.substr(10, 2), 10);
             const second = parseInt(str.substr(12, 2), 10);
-            return new Date(Date.UTC(year, month, day, hour - 1, minute, second));
+            return new Date(Date.UTC(year, month, day, hour - 1, minute, second)); // Conversione orario
         }
 
         async function loadPlaylist() {
             try {
-                const response = await fetch(defaultM3uUrl);
+                const response = await fetch(m3uUrl);
                 if (!response.ok) {
                     throw new Error(`File non trovato o errore HTTP (${response.status})`);
                 }
-                const m3uData = await response.text();
-                parseM3U(m3uData);
+                const data = await response.text();
+                parseM3U(data);
                 
                 if (channels.length === 0) {
-                    document.getElementById('channelsContainer').innerHTML = '<p class="text-yellow-500 text-center">Nessun canale trovato nella playlist.</p>';
+                    document.getElementById('channelsContainer').innerHTML = '<p class="text-yellow-500 text-center">File letto, ma nessun canale trovato.</p>';
                     return;
                 }
 
@@ -207,12 +168,11 @@
                 filterChannels();
             } catch (error) {
                 console.error('Errore:', error);
-                document.getElementById('channelsContainer').innerHTML = `<p class="text-red-500 text-center">Errore: ${error.message}. Verifica la playlist.</p>`;
+                document.getElementById('channelsContainer').innerHTML = `<p class="text-red-500 text-center">Errore: ${error.message}. Assicurati che <b>IPTV.m3u</b> sia caricato correttamente.</p>`;
             }
         }
 
         function parseM3U(data) {
-            channels = [];
             const lines = data.split(/\r?\n/);
             let currentChannel = {};
 
@@ -236,6 +196,7 @@
                 } else if (line && !line.startsWith('#')) {
                     currentChannel.url = line;
                     if (currentChannel.name && currentChannel.url) {
+                        // Cerca programma in onda tramite tvg-id o nome canale
                         let currentShow = "In onda ora non disponibile";
                         if (currentChannel.tvgId && epgData[currentChannel.tvgId]) {
                             currentShow = epgData[currentChannel.tvgId][0];
@@ -250,38 +211,9 @@
             }
         }
 
-        function openEpgModal() {
-            const activeEpg = localStorage.getItem('iptv_custom_epg') || defaultEpgUrl;
-            document.getElementById('epgUrlInput').value = activeEpg;
-            document.getElementById('epgModal').classList.remove('hidden');
-        }
-
-        function closeEpgModal() {
-            document.getElementById('epgModal').classList.add('hidden');
-        }
-
-        function saveAndReloadEpg() {
-            const newUrl = document.getElementById('epgUrlInput').value.trim();
-            if(!newUrl) {
-                alert("Inserisci un link EPG valido!");
-                return;
-            }
-            localStorage.setItem('iptv_custom_epg', newUrl);
-            closeEpgModal();
-            location.reload();
-        }
-
-        function resetEpgUrl() {
-            localStorage.removeItem('iptv_custom_epg');
-            document.getElementById('epgUrlInput').value = defaultEpgUrl;
-            closeEpgModal();
-            location.reload();
-        }
-
         function populateGroups() {
             const groups = [...new Set(channels.map(c => c.group))].sort();
             const select = document.getElementById('groupSelect');
-            select.innerHTML = '<option value="">Tutte le categorie (Gruppi)</option>';
             
             groups.forEach(group => {
                 const option = document.createElement('option');
@@ -625,6 +557,7 @@
             renderChannels(filteredChannelsCache);
         }
 
+        // Avvio dell'applicazione
         initApp();
     </script>
 </body>
