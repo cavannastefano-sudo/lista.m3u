@@ -76,20 +76,12 @@
             </div>
         </div>
         
-        <!-- Area Video con controlli personalizzati integrati -->
-        <div class="relative flex-grow flex flex-col items-center justify-center bg-black">
-            <video id="fullscreenVideoPlayer" autoplay playsinline class="w-full max-h-[65vh] bg-black"></video>
-            
-            <!-- Tasti cambio canale stile "avanti/indietro" posizionati subito sotto il video nel player -->
-            <div class="flex items-center justify-center gap-6 py-3 w-full bg-gray-900 bg-opacity-80 mt-1 rounded">
-                <button onclick="changeFullscreenChannel(-1)" class="bg-gray-800 hover:bg-gray-700 text-white text-xs px-4 py-2 rounded-full border border-gray-700 font-bold flex items-center gap-1 active:scale-95 transition">
-                    ⏮ Canale Prec.
-                </button>
-                <button onclick="changeFullscreenChannel(1)" class="bg-gray-800 hover:bg-gray-700 text-white text-xs px-4 py-2 rounded-full border border-gray-700 font-bold flex items-center gap-1 active:scale-95 transition">
-                    Canale Succ. ⏭
-                </button>
-            </div>
+        <!-- Area Video con Swipe -->
+        <div id="swipeArea" class="relative flex-grow flex items-center justify-center bg-black">
+            <video id="fullscreenVideoPlayer" controls autoplay playsinline class="w-full max-h-[70vh] bg-black"></video>
         </div>
+
+        <p class="text-[10px] text-gray-400 text-center py-1">💡 Swipe in alto/basso per cambiare canale</p>
 
         <!-- Tendina Laterale Canali per Mobile -->
         <div id="channelDrawer" class="absolute top-0 right-0 h-full w-72 bg-gray-900 border-l border-gray-700 transform translate-x-full transition-transform duration-300 z-20 flex flex-col shadow-2xl">
@@ -134,6 +126,7 @@
 
         async function loadPlaylist() {
             try {
+                // Aggiungiamo un parametro casuale per evitare la cache di GitHub/Browser
                 const response = await fetch(m3uUrl + '?t=' + new Date().getTime());
                 if (!response.ok) throw new Error(`HTTP error (${response.status})`);
                 const data = await response.text();
@@ -164,6 +157,7 @@
             for (let i = 0; i < lines.length; i++) {
                 let line = lines[i].trim();
 
+                // Salta le intestazioni M3U
                 if (line.startsWith('#EXTM3U')) {
                     continue; 
                 }
@@ -192,6 +186,7 @@
             const groups = [...new Set(channels.map(c => c.group))].sort();
             const select = document.getElementById('groupSelect');
             
+            // Pulisci le opzioni esistenti mantenendo la prima
             select.innerHTML = '<option value="">Tutte le categorie</option>';
 
             groups.forEach(group => {
@@ -324,23 +319,9 @@
                     <button onclick="stopAllPlayers()" class="text-gray-400 text-[10px] px-2 bg-gray-800 rounded">Chiudi ✕</button>
                 </div>
                 <video id="inline-video-${index}" controls autoplay playsinline class="w-full max-h-48 rounded bg-black"></video>
-                <div class="flex justify-center items-center gap-4 mt-2 pt-2 border-t border-gray-800">
-                    <button onclick="changeInlineChannel(${index}, -1)" class="bg-gray-800 hover:bg-gray-700 text-white text-[10px] px-3 py-1.5 rounded-full border border-gray-700 font-bold">⏮ Canale Prec.</button>
-                    <button onclick="changeInlineChannel(${index}, 1)" class="bg-gray-800 hover:bg-gray-700 text-white text-[10px] px-3 py-1.5 rounded-full border border-gray-700 font-bold">Canale Succ. ⏭</button>
-                </div>
             `;
             const video = document.getElementById(`inline-video-${index}`);
             loadVideoSource(video, url, false, index);
-        }
-
-        function changeInlineChannel(currentIndex, direction) {
-            if (filteredChannelsCache.length === 0) return;
-            let nextIndex = currentIndex + direction;
-            if (nextIndex < 0) nextIndex = filteredChannelsCache.length - 1;
-            else if (nextIndex >= filteredChannelsCache.length) nextIndex = 0;
-            
-            const channel = filteredChannelsCache[nextIndex];
-            toggleInlinePlayer(nextIndex, channel.url, channel.name);
         }
 
         function playFullscreenByIndex(index) {
@@ -398,6 +379,28 @@
         document.getElementById('drawerSearch').addEventListener('input', function() {
             renderDrawerList(this.value);
         });
+
+        let touchStartX = 0, touchStartY = 0, touchEndX = 0, touchEndY = 0;
+        const swipeArea = document.getElementById('swipeArea');
+
+        swipeArea.addEventListener('touchstart', e => {
+            touchStartX = e.changedTouches[0].screenX;
+            touchStartY = e.changedTouches[0].screenY;
+        }, { passive: true });
+
+        swipeArea.addEventListener('touchend', e => {
+            touchEndX = e.changedTouches[0].screenX;
+            touchEndY = e.changedTouches[0].screenY;
+            handleSwipe();
+        }, { passive: true });
+
+        function handleSwipe() {
+            const yDiff = touchStartY - touchEndY;
+            if (Math.abs(yDiff) > 50) {
+                if (yDiff > 0) changeFullscreenChannel(1);
+                else changeFullscreenChannel(-1);
+            }
+        }
 
         function changeFullscreenChannel(direction) {
             if (filteredChannelsCache.length === 0) return;
