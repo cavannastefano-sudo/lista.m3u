@@ -21,7 +21,7 @@
         <header class="mb-4 text-center relative flex items-center justify-between bg-gray-800 p-3 rounded-lg shadow">
             <div class="text-left">
                 <h1 class="text-xl font-bold">📺 IPTV</h1>
-                <p class="text-[10px] text-gray-400">Mobile EPG Player</p>
+                <p class="text-[10px] text-gray-400">Mobile Stream Player</p>
             </div>
             <div class="flex gap-1">
                 <button onclick="location.reload()" class="bg-gray-700 hover:bg-gray-600 text-gray-200 p-2 rounded text-xs flex items-center gap-1 active:scale-95 transition">
@@ -33,12 +33,12 @@
             </div>
         </header>
 
-        <!-- Menu a comparsa Mobile per EPG e Opzioni -->
+        <!-- Menu a comparsa Mobile con Stato Playlist e Aggiorna -->
         <div id="mobileMenu" class="hidden bg-gray-800 border border-gray-700 rounded-lg p-3 mb-4 shadow-xl text-xs space-y-2">
-            <div class="font-bold text-blue-400 border-b border-gray-700 pb-1">Opzioni e Guida TV (EPG)</div>
-            <div class="text-[11px] text-gray-300">Stato EPG: <span id="epgMobileStatus" class="text-yellow-400">Verifica...</span></div>
+            <div class="font-bold text-blue-400 border-b border-gray-700 pb-1">Gestione Playlist</div>
+            <div class="text-[11px] text-gray-300">Stato Playlist: <span id="playlistStatus" class="text-yellow-400">Caricamento...</span></div>
             <div class="flex gap-2 pt-1">
-                <button onclick="refreshEpgData()" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white py-2 rounded font-medium transition">Aggiorna EPG</button>
+                <button onclick="refreshPlaylistData()" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white py-2 rounded font-medium transition">Aggiorna Playlist</button>
                 <button onclick="toggleMobileMenu()" class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded transition">Chiudi</button>
             </div>
         </div>
@@ -62,7 +62,7 @@
 
         <!-- Contenitore Canali -->
         <div id="channelsContainer">
-            <p class="text-gray-400 text-center text-sm mt-8">Caricamento canali e guida TV in corso...</p>
+            <p class="text-gray-400 text-center text-sm mt-8">Caricamento canali in corso...</p>
         </div>
     </div>
 
@@ -100,10 +100,8 @@
 
     <script>
         const m3uUrl = 'https://cavannastefano-sudo.github.io/lista.m3u/IPTV.m3u'; 
-        const epgJsonUrl = 'https://tvit.leicaflorianrobert.dev/epg/list.json';
         
         let channels = [];
-        let epgData = {}; 
         let filteredChannelsCache = []; 
         let currentFullscreenIndex = 0; 
         
@@ -111,7 +109,6 @@
         let savedGroup = localStorage.getItem('iptv_selected_group') || '';
 
         async function initApp() {
-            await loadEpg();
             await loadPlaylist();
         }
 
@@ -120,63 +117,35 @@
             menu.classList.toggle('hidden');
         }
 
-        async function refreshEpgData() {
-            epgData = {};
-            document.getElementById('epgMobileStatus').textContent = "Aggiornamento in corso...";
-            await loadEpg();
-            filterChannels();
-            alert("Guida EPG aggiornata!");
+        async function refreshPlaylistData() {
+            document.getElementById('playlistStatus').textContent = "Aggiornamento in corso...";
+            await loadPlaylist();
+            alert("Playlist aggiornata!");
             toggleMobileMenu();
-        }
-
-        async function loadEpg() {
-            try {
-                const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(epgJsonUrl);
-                const response = await fetch(proxyUrl);
-                if (!response.ok) throw new Error("Errore rete EPG");
-                
-                const jsonData = await response.json();
-                let count = 0;
-
-                // Lettura diretta basata sulla struttura JSON di TVIT EPG
-                if (jsonData && typeof jsonData === 'object') {
-                    for (const [key, value] of Object.entries(jsonData)) {
-                        // Se l'oggetto contiene i dati del canale o array di programmi
-                        if (Array.isArray(value)) {
-                            epgData[key] = value.map(p => p.title || p.name || p);
-                            count++;
-                        } else if (value && typeof value === 'object' && value.title) {
-                            epgData[key] = [value.title];
-                            count++;
-                        }
-                    }
-                }
-
-                document.getElementById('epgMobileStatus').textContent = `Attiva (${count} canali)`;
-            } catch (e) {
-                console.warn("Errore EPG JSON:", e);
-                document.getElementById('epgMobileStatus').textContent = "Non disponibile";
-            }
         }
 
         async function loadPlaylist() {
             try {
-                const response = await fetch(m3uUrl);
+                // Aggiungiamo un parametro casuale per evitare la cache di GitHub/Browser
+                const response = await fetch(m3uUrl + '?t=' + new Date().getTime());
                 if (!response.ok) throw new Error(`HTTP error (${response.status})`);
                 const data = await response.text();
                 parseM3U(data);
                 
                 if (channels.length === 0) {
                     document.getElementById('channelsContainer').innerHTML = '<p class="text-yellow-500 text-center text-xs">Nessun canale trovato.</p>';
+                    document.getElementById('playlistStatus').textContent = "Vuota (0 canali)";
                     return;
                 }
 
+                document.getElementById('playlistStatus').textContent = `Caricata (${channels.length} canali)`;
                 populateGroups();
                 updateViewButtons();
                 filterChannels();
             } catch (error) {
                 console.error('Errore:', error);
                 document.getElementById('channelsContainer').innerHTML = `<p class="text-red-500 text-center text-xs">Errore caricamento lista.</p>`;
+                document.getElementById('playlistStatus').textContent = "Errore di connessione";
             }
         }
 
@@ -188,7 +157,7 @@
             for (let i = 0; i < lines.length; i++) {
                 let line = lines[i].trim();
 
-                // Salta l'intestazione IPTV (#EXTM3U) per evitare blocchi nel browser
+                // Salta le intestazioni M3U
                 if (line.startsWith('#EXTM3U')) {
                     continue; 
                 }
@@ -202,21 +171,11 @@
                     let groupMatch = line.match(/group-title="([^"]*)"/);
                     currentChannel.group = groupMatch ? groupMatch[1] : 'Altro';
 
-                    let idMatch = line.match(/tvg-id="([^"]*)"/);
-                    currentChannel.tvgId = idMatch ? idMatch[1] : '';
-
                     let nameParts = line.split(',');
                     currentChannel.name = nameParts[nameParts.length - 1].trim();
                 } else if (line && !line.startsWith('#')) {
                     currentChannel.url = line;
                     if (currentChannel.name && currentChannel.url) {
-                        let currentShow = "In onda ora non disponibile";
-                        if (currentChannel.tvgId && epgData[currentChannel.tvgId]) {
-                            currentShow = epgData[currentChannel.tvgId][0];
-                        } else if (epgData[currentChannel.name]) {
-                            currentShow = epgData[currentChannel.name][0];
-                        }
-                        currentChannel.nowPlaying = currentShow;
                         channels.push(currentChannel);
                     }
                 }
@@ -227,6 +186,9 @@
             const groups = [...new Set(channels.map(c => c.group))].sort();
             const select = document.getElementById('groupSelect');
             
+            // Pulisci le opzioni esistenti mantenendo la prima
+            select.innerHTML = '<option value="">Tutte le categorie</option>';
+
             groups.forEach(group => {
                 const option = document.createElement('option');
                 option.value = group;
@@ -281,9 +243,6 @@
                 el.classList.add('hidden');
                 el.innerHTML = '';
             });
-            document.querySelectorAll('[id^="inline-row-"]').forEach(el => {
-                el.classList.add('hidden');
-            });
         }
 
         function renderChannels(channelsToRender) {
@@ -311,7 +270,7 @@
                             <img src="${channel.logo}" alt="" class="w-8 h-8 object-contain bg-transparent rounded flex-shrink-0" onerror="this.src='https://via.placeholder.com/32?text=TV'">
                             <div class="truncate">
                                 <h4 class="font-medium text-xs truncate">${channel.name}</h4>
-                                <p class="text-[10px] text-blue-400 truncate">▶ ${channel.nowPlaying}</p>
+                                <p class="text-[10px] text-gray-400 truncate">${channel.group}</p>
                             </div>
                         </div>
                         <button onclick="playFullscreenByIndex(${index})" class="bg-blue-600 text-white text-[10px] px-2.5 py-1.5 rounded flex-shrink-0 ml-2">▶ Play</button>
@@ -339,7 +298,7 @@
                             <img src="${channel.logo}" alt="" class="w-7 h-7 object-contain rounded flex-shrink-0" onerror="this.src='https://via.placeholder.com/28?text=TV'">
                             <div class="truncate">
                                 <div class="font-medium text-xs truncate">${channel.name}</div>
-                                <div class="text-[10px] text-blue-400 truncate">▶ ${channel.nowPlaying}</div>
+                                <div class="text-[10px] text-gray-400 truncate">${channel.group}</div>
                             </div>
                         </div>
                         <button onclick="playFullscreenByIndex(${index})" class="bg-blue-600 text-white text-[10px] px-2.5 py-1 rounded">Play</button>
@@ -375,7 +334,7 @@
             const video = document.getElementById('fullscreenVideoPlayer');
             const title = document.getElementById('fullscreenTitle');
 
-            title.textContent = `${channel.name} - ${channel.nowPlaying}`;
+            title.textContent = channel.name;
             modal.classList.remove('hidden');
 
             loadVideoSource(video, channel.url, true);
@@ -406,7 +365,7 @@
                     <img src="${channel.logo}" alt="" class="w-6 h-6 object-contain rounded flex-shrink-0" onerror="this.src='https://via.placeholder.com/24?text=TV'">
                     <div class="truncate flex-grow">
                         <div class="font-medium text-xs truncate">${channel.name}</div>
-                        <div class="text-[9px] text-gray-400 truncate">${channel.nowPlaying}</div>
+                        <div class="text-[9px] text-gray-400 truncate">${channel.group}</div>
                     </div>
                 `;
                 item.addEventListener('click', () => {
