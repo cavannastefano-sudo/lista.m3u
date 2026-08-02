@@ -68,23 +68,20 @@
 
     <!-- Modale Player a Tutto Schermo per Mobile -->
     <div id="fullscreenModal" class="fixed inset-0 bg-black bg-opacity-95 z-50 hidden flex flex-col justify-between p-2">
-        <!-- Barra superiore con Titolo, Tasti Prec/Succ, Canali e Chiudi -->
-        <div class="flex justify-between items-center bg-gray-900 p-2 rounded-t-lg gap-1">
-            <h2 id="fullscreenTitle" class="text-xs font-bold text-blue-400 truncate max-w-[35%]"></h2>
-            <div class="flex gap-1 items-center">
-                <button onclick="changeFullscreenChannel(-1)" class="bg-gray-800 hover:bg-gray-700 text-white text-[10px] px-2 py-1 rounded border border-gray-700 active:scale-95">◀ Prec</button>
-                <button onclick="changeFullscreenChannel(1)" class="bg-gray-800 hover:bg-gray-700 text-white text-[10px] px-2 py-1 rounded border border-gray-700 active:scale-95">Succ ▶</button>
+        <div class="flex justify-between items-center bg-gray-900 p-2 rounded-t-lg">
+            <h2 id="fullscreenTitle" class="text-xs font-bold text-blue-400 truncate max-w-[70%]"></h2>
+            <div class="flex gap-1">
                 <button onclick="toggleChannelDrawer()" class="bg-blue-600 text-white text-[10px] px-2 py-1 rounded">Canali</button>
-                <button onclick="closeFullscreenPlayer()" class="bg-red-600 text-white text-[10px] px-2 py-1 rounded font-bold">✕</button>
+                <button onclick="closeFullscreenPlayer()" class="bg-red-600 text-white text-[10px] px-2 py-1 rounded font-bold">✕ Chiudi</button>
             </div>
         </div>
         
-        <!-- Area Video -->
-        <div class="relative flex-grow flex items-center justify-center bg-black">
-            <video id="fullscreenVideoPlayer" controls autoplay playsinline class="w-full max-h-[75vh] bg-black"></video>
+        <!-- Area Video con Swipe -->
+        <div id="swipeArea" class="relative flex-grow flex items-center justify-center bg-black">
+            <video id="fullscreenVideoPlayer" controls autoplay playsinline class="w-full max-h-[70vh] bg-black"></video>
         </div>
 
-        <p class="text-[10px] text-gray-400 text-center py-1">💡 Usa i tasti ◀ Prec e Succ ▶ in alto per cambiare canale</p>
+        <p class="text-[10px] text-gray-400 text-center py-1">💡 Swipe in alto/basso per cambiare canale</p>
 
         <!-- Tendina Laterale Canali per Mobile -->
         <div id="channelDrawer" class="absolute top-0 right-0 h-full w-72 bg-gray-900 border-l border-gray-700 transform translate-x-full transition-transform duration-300 z-20 flex flex-col shadow-2xl">
@@ -129,6 +126,7 @@
 
         async function loadPlaylist() {
             try {
+                // Aggiungiamo un parametro casuale per evitare la cache di GitHub/Browser
                 const response = await fetch(m3uUrl + '?t=' + new Date().getTime());
                 if (!response.ok) throw new Error(`HTTP error (${response.status})`);
                 const data = await response.text();
@@ -159,6 +157,7 @@
             for (let i = 0; i < lines.length; i++) {
                 let line = lines[i].trim();
 
+                // Salta le intestazioni M3U
                 if (line.startsWith('#EXTM3U')) {
                     continue; 
                 }
@@ -187,6 +186,7 @@
             const groups = [...new Set(channels.map(c => c.group))].sort();
             const select = document.getElementById('groupSelect');
             
+            // Pulisci le opzioni esistenti mantenendo la prima
             select.innerHTML = '<option value="">Tutte le categorie</option>';
 
             groups.forEach(group => {
@@ -379,6 +379,28 @@
         document.getElementById('drawerSearch').addEventListener('input', function() {
             renderDrawerList(this.value);
         });
+
+        let touchStartX = 0, touchStartY = 0, touchEndX = 0, touchEndY = 0;
+        const swipeArea = document.getElementById('swipeArea');
+
+        swipeArea.addEventListener('touchstart', e => {
+            touchStartX = e.changedTouches[0].screenX;
+            touchStartY = e.changedTouches[0].screenY;
+        }, { passive: true });
+
+        swipeArea.addEventListener('touchend', e => {
+            touchEndX = e.changedTouches[0].screenX;
+            touchEndY = e.changedTouches[0].screenY;
+            handleSwipe();
+        }, { passive: true });
+
+        function handleSwipe() {
+            const yDiff = touchStartY - touchEndY;
+            if (Math.abs(yDiff) > 50) {
+                if (yDiff > 0) changeFullscreenChannel(1);
+                else changeFullscreenChannel(-1);
+            }
+        }
 
         function changeFullscreenChannel(direction) {
             if (filteredChannelsCache.length === 0) return;
