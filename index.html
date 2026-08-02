@@ -19,11 +19,17 @@
     <div class="container mx-auto px-4 py-8">
         <header class="mb-8 text-center relative">
             <h1 class="text-3xl font-bold mb-2">📺 IPTV</h1>
-            <p class="text-gray-400">Visualizza e riproduci i canali dal tuo file IPTV.m3u su GitHub</p>
-            <!-- Pulsante Aggiorna in alto -->
-            <button onclick="location.reload()" class="absolute top-0 right-0 bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 py-1.5 rounded text-sm flex items-center gap-1 transition">
-                🔄 Aggiorna
-            </button>
+            <p class="text-gray-400">Visualizza e riproduci i canali IPTV</p>
+            
+            <!-- Pulsanti in alto a destra -->
+            <div class="absolute top-0 right-0 flex gap-2">
+                <button onclick="openManualModal()" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded text-sm flex items-center gap-1 transition">
+                    📝 Gestione Playlist
+                </button>
+                <button onclick="location.reload()" class="bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 py-1.5 rounded text-sm flex items-center gap-1 transition">
+                    🔄 Aggiorna
+                </button>
+            </div>
         </header>
 
         <!-- Barra di ricerca, Filtro Gruppi e Toggle Vista -->
@@ -44,6 +50,33 @@
         <!-- Contenitore Canali -->
         <div id="channelsContainer">
             <p class="text-gray-400 text-center">Caricamento canali e guida TV in corso...</p>
+        </div>
+    </div>
+
+    <!-- Modale per Gestione e Inserimento Manuale M3U -->
+    <div id="manualModal" class="fixed inset-0 bg-black bg-opacity-80 z-50 hidden flex justify-center items-center p-4">
+        <div class="bg-gray-800 w-full max-w-2xl rounded-lg p-6 flex flex-col shadow-2xl border border-gray-700">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-blue-400">Gestione Playlist M3U</h3>
+                <button onclick="closeManualModal()" class="text-gray-400 hover:text-white text-lg">✕</button>
+            </div>
+            
+            <!-- Box Stato Playlist Attuale -->
+            <div class="bg-gray-900 p-3 rounded mb-4 border border-gray-700 text-xs flex flex-col gap-1">
+                <div><span class="text-gray-400">Origine attiva:</span> <strong id="playlistSourceStatus" class="text-green-400">Caricamento...</strong></div>
+                <div><span class="text-gray-400">Canali in memoria:</span> <strong id="playlistCountStatus" class="text-blue-400">0</strong></div>
+            </div>
+
+            <p class="text-xs text-gray-400 mb-2">Incolla o modifica qui sotto il codice del tuo file .m3u:</p>
+            <textarea id="manualM3uInput" rows="8" placeholder="#EXTM3U..." class="w-full p-3 rounded bg-gray-900 border border-gray-700 text-xs font-mono text-white focus:outline-none focus:border-blue-500 mb-4"></textarea>
+            
+            <div class="flex justify-between items-center">
+                <button onclick="resetManualM3u()" class="bg-red-900 hover:bg-red-800 text-white text-xs px-3 py-2 rounded transition">Torna a GitHub</button>
+                <div class="flex gap-2">
+                    <button onclick="closeManualModal()" class="bg-gray-700 hover:bg-gray-600 text-white text-xs px-4 py-2 rounded transition">Chiudi</button>
+                    <button onclick="saveManualM3u()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs px-4 py-2 rounded transition">Salva e Applica</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -86,11 +119,11 @@
     </div>
 
     <script>
-        const m3uUrl = 'https://cavannastefano-sudo.github.io/lista.m3u/IPTV.m3u'; 
+        const defaultM3uUrl = 'https://cavannastefano-sudo.github.io/lista.m3u/IPTV.m3u'; 
         const epgUrl = 'http://rebrand.ly/epgitalia';
         
         let channels = [];
-        let epgData = {}; // Memorizza i programmi EPG per tvg-id o nome
+        let epgData = {}; 
         let filteredChannelsCache = []; 
         let currentFullscreenIndex = 0; 
         
@@ -104,7 +137,6 @@
 
         async function loadEpg() {
             try {
-                // Utilizziamo un proxy CORS pubblico per leggere il file XML esterno dal browser
                 const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(epgUrl);
                 const response = await fetch(proxyUrl);
                 if (!response.ok) return;
@@ -118,7 +150,7 @@
 
                 for (let prog of programmes) {
                     const channelId = prog.getAttribute("channel");
-                    const startStr = prog.getAttribute("start"); // Formato YYYYMMDDHHMMSS +ZZZZ
+                    const startStr = prog.getAttribute("start"); 
                     const stopStr = prog.getAttribute("stop");
                     const titleElem = prog.getElementsByTagName("title")[0];
                     
@@ -146,20 +178,32 @@
             const hour = parseInt(str.substr(8, 2), 10);
             const minute = parseInt(str.substr(10, 2), 10);
             const second = parseInt(str.substr(12, 2), 10);
-            return new Date(Date.UTC(year, month, day, hour - 1, minute, second)); // Conversione orario
+            return new Date(Date.UTC(year, month, day, hour - 1, minute, second));
         }
 
         async function loadPlaylist() {
             try {
-                const response = await fetch(m3uUrl);
-                if (!response.ok) {
-                    throw new Error(`File non trovato o errore HTTP (${response.status})`);
-                }
-                const data = await response.text();
-                parseM3U(data);
+                let m3uData = localStorage.getItem('iptv_manual_m3u');
+                let sourceDesc = "File GitHub Ufficiale (" + defaultM3uUrl + ")";
                 
+                if (!m3uData) {
+                    const response = await fetch(defaultM3uUrl);
+                    if (!response.ok) {
+                        throw new Error(`File non trovato o errore HTTP (${response.status})`);
+                    }
+                    m3uData = await response.text();
+                } else {
+                    sourceDesc = "Playlist Personalizzata Inserita Manualmente";
+                }
+
+                parseM3U(m3uData);
+                
+                // Aggiorna lo stato nel pannello modale
+                document.getElementById('playlistSourceStatus').textContent = sourceDesc;
+                document.getElementById('playlistCountStatus').textContent = channels.length + " canali caricati";
+
                 if (channels.length === 0) {
-                    document.getElementById('channelsContainer').innerHTML = '<p class="text-yellow-500 text-center">File letto, ma nessun canale trovato.</p>';
+                    document.getElementById('channelsContainer').innerHTML = '<p class="text-yellow-500 text-center">Nessun canale trovato nella playlist.</p>';
                     return;
                 }
 
@@ -168,11 +212,12 @@
                 filterChannels();
             } catch (error) {
                 console.error('Errore:', error);
-                document.getElementById('channelsContainer').innerHTML = `<p class="text-red-500 text-center">Errore: ${error.message}. Assicurati che <b>IPTV.m3u</b> sia caricato correttamente.</p>`;
+                document.getElementById('channelsContainer').innerHTML = `<p class="text-red-500 text-center">Errore: ${error.message}. Verifica la playlist.</p>`;
             }
         }
 
         function parseM3U(data) {
+            channels = [];
             const lines = data.split(/\r?\n/);
             let currentChannel = {};
 
@@ -196,7 +241,6 @@
                 } else if (line && !line.startsWith('#')) {
                     currentChannel.url = line;
                     if (currentChannel.name && currentChannel.url) {
-                        // Cerca programma in onda tramite tvg-id o nome canale
                         let currentShow = "In onda ora non disponibile";
                         if (currentChannel.tvgId && epgData[currentChannel.tvgId]) {
                             currentShow = epgData[currentChannel.tvgId][0];
@@ -211,9 +255,37 @@
             }
         }
 
+        function openManualModal() {
+            const saved = localStorage.getItem('iptv_manual_m3u') || '';
+            document.getElementById('manualM3uInput').value = saved;
+            document.getElementById('manualModal').classList.remove('hidden');
+        }
+
+        function closeManualModal() {
+            document.getElementById('manualModal').classList.add('hidden');
+        }
+
+        function saveManualM3u() {
+            const text = document.getElementById('manualM3uInput').value.trim();
+            if(!text) {
+                alert("Il campo è vuoto!");
+                return;
+            }
+            localStorage.setItem('iptv_manual_m3u', text);
+            closeManualModal();
+            location.reload();
+        }
+
+        function resetManualM3u() {
+            localStorage.removeItem('iptv_manual_m3u');
+            closeManualModal();
+            location.reload();
+        }
+
         function populateGroups() {
             const groups = [...new Set(channels.map(c => c.group))].sort();
             const select = document.getElementById('groupSelect');
+            select.innerHTML = '<option value="">Tutte le categorie (Gruppi)</option>';
             
             groups.forEach(group => {
                 const option = document.createElement('option');
@@ -557,7 +629,6 @@
             renderChannels(filteredChannelsCache);
         }
 
-        // Avvio dell'applicazione
         initApp();
     </script>
 </body>
