@@ -76,24 +76,12 @@
             </div>
         </div>
         
-        <!-- Area Video con i tasti al centro stile YouTube -->
+        <!-- Area Video con Swipe -->
         <div id="swipeArea" class="relative flex-grow flex items-center justify-center bg-black">
             <video id="fullscreenVideoPlayer" controls autoplay playsinline class="w-full max-h-[70vh] bg-black"></video>
-            
-            <!-- Overlay centrale con i pulsanti stile YouTube per il cambio canale -->
-            <div class="absolute inset-0 flex items-center justify-center gap-12 pointer-events-none">
-                <!-- Tasto Canale Precedente -->
-                <button onclick="changeFullscreenChannel(-1)" class="pointer-events-auto bg-black bg-opacity-50 hover:bg-opacity-80 text-white p-3 rounded-full border border-gray-700 shadow-lg active:scale-95 transition flex items-center justify-center" title="Canale Precedente">
-                    <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
-                </button>
-                <!-- Tasto Canale Successivo -->
-                <button onclick="changeFullscreenChannel(1)" class="pointer-events-auto bg-black bg-opacity-50 hover:bg-opacity-80 text-white p-3 rounded-full border border-gray-700 shadow-lg active:scale-95 transition flex items-center justify-center" title="Canale Successivo">
-                    <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
-                </button>
-            </div>
         </div>
 
-        <p class="text-[10px] text-gray-400 text-center py-1">💡 Swipe in alto/basso o usa i tasti al centro per cambiare canale</p>
+        <p class="text-[10px] text-gray-400 text-center py-1">💡 Swipe in alto/basso per cambiare canale</p>
 
         <!-- Tendina Laterale Canali per Mobile -->
         <div id="channelDrawer" class="absolute top-0 right-0 h-full w-72 bg-gray-900 border-l border-gray-700 transform translate-x-full transition-transform duration-300 z-20 flex flex-col shadow-2xl">
