@@ -45,7 +45,7 @@
 
         <!-- Barra di ricerca e Filtro Gruppi per Mobile -->
         <div class="flex flex-col gap-2 mb-4">
-            <input type="text" id="searchInput" placeholder="🔍 Cerca canale..." class="w-full px-2.5 py-2 rounded-lg bg-gray-800 border border-gray-700 text-xs focus:outline-none focus:border-blue-500">
+            <input type="text" id="searchInput" placeholder="🔍 Cerca canale..." class="w-full px-2.5 py-2 rounded-lg bg-gray-800 border border-gray-700 text-sm focus:outline-none focus:border-blue-500">
             
             <div class="flex gap-2">
                 <select id="groupSelect" class="w-2/3 px-2 py-2 rounded-lg bg-gray-800 border border-gray-700 text-xs focus:outline-none focus:border-blue-500">
@@ -69,19 +69,22 @@
     <!-- Modale Player a Tutto Schermo per Mobile -->
     <div id="fullscreenModal" class="fixed inset-0 bg-black bg-opacity-95 z-50 hidden flex flex-col justify-between p-2">
         <div class="flex justify-between items-center bg-gray-900 p-2 rounded-t-lg">
-            <h2 id="fullscreenTitle" class="text-xs font-bold text-blue-400 truncate max-w-[70%]"></h2>
-            <div class="flex gap-1">
-                <button onclick="toggleChannelDrawer()" class="bg-blue-600 text-white text-[10px] px-2 py-1 rounded">Canali</button>
-                <button onclick="closeFullscreenPlayer()" class="bg-red-600 text-white text-[10px] px-2 py-1 rounded font-bold">✕ Chiudi</button>
+            <h2 id="fullscreenTitle" class="text-xs font-bold text-blue-400 truncate max-w-[60%]"></h2>
+            <!-- Pulsanti cambio canale rapidi anche nella barra in alto del modale -->
+            <div class="flex gap-1 items-center">
+                <button onclick="changeFullscreenChannel(-1)" class="bg-gray-800 text-white text-[10px] px-2 py-1 rounded border border-gray-700">◀ Prec</button>
+                <button onclick="changeFullscreenChannel(1)" class="bg-gray-800 text-white text-[10px] px-2 py-1 rounded border border-gray-700">Succ ▶</button>
+                <button onclick="toggleChannelDrawer()" class="bg-blue-600 text-white text-[10px] px-2 py-1 rounded ml-1">Canali</button>
+                <button onclick="closeFullscreenPlayer()" class="bg-red-600 text-white text-[10px] px-2 py-1 rounded font-bold">✕</button>
             </div>
         </div>
         
-        <!-- Area Video con Swipe attivo solo qui -->
-        <div id="swipeArea" class="relative flex-grow flex items-center justify-center bg-black">
-            <video id="fullscreenVideoPlayer" controls autoplay playsinline class="w-full max-h-[70vh] bg-black"></video>
+        <!-- Area Video -->
+        <div class="relative flex-grow flex items-center justify-center bg-black">
+            <video id="fullscreenVideoPlayer" controls autoplay playsinline class="w-full max-h-[75vh] bg-black"></video>
         </div>
 
-        <p class="text-[10px] text-gray-400 text-center py-1">💡 Swipe in alto/basso per cambiare canale a schermo intero</p>
+        <p class="text-[10px] text-gray-400 text-center py-1">💡 Usa i tasti in alto o la tendina per cambiare canale</p>
 
         <!-- Tendina Laterale Canali per Mobile -->
         <div id="channelDrawer" class="absolute top-0 right-0 h-full w-72 bg-gray-900 border-l border-gray-700 transform translate-x-full transition-transform duration-300 z-20 flex flex-col shadow-2xl">
@@ -104,6 +107,7 @@
         let channels = [];
         let filteredChannelsCache = []; 
         let currentFullscreenIndex = 0;
+        let activeInlineIndex = null;
         
         let currentView = localStorage.getItem('iptv_view_mode') || 'grid';
         let savedGroup = localStorage.getItem('iptv_selected_group') || '';
@@ -240,6 +244,7 @@
                 el.classList.add('hidden');
                 el.innerHTML = '';
             });
+            activeInlineIndex = null;
         }
 
         function renderChannels(channelsToRender) {
@@ -306,9 +311,15 @@
             }
         }
 
-        // Player integrato pulito senza intercettazioni touch esterne (evita conflitti)
+        // PLAYER INTEGRATO (INLINE) CON I PULSANTI PREV / NEXT INTEGRATI NELLA BARRA
         function toggleInlinePlayer(index) {
+            if (activeInlineIndex === index) {
+                stopAllPlayers();
+                return;
+            }
+
             stopAllPlayers();
+            activeInlineIndex = index;
             const channel = filteredChannelsCache[index];
             if (!channel) return;
 
@@ -318,17 +329,27 @@
             playerDiv.classList.remove('hidden');
             
             playerDiv.innerHTML = `
-                <div class="flex justify-between items-center mb-1 bg-gray-900 p-1.5 rounded">
-                    <h3 class="text-[11px] font-semibold text-blue-400 truncate max-w-[70%]">${channel.name}</h3>
-                    <button onclick="stopAllPlayers()" class="text-gray-300 text-[10px] px-2 py-0.5 bg-red-900 hover:bg-red-800 rounded font-bold">
-                        ✕ Chiudi
-                    </button>
+                <div class="flex justify-between items-center mb-1 bg-gray-900 p-1.5 rounded gap-1">
+                    <h3 id="inline-title-${index}" class="text-[11px] font-semibold text-blue-400 truncate max-w-[40%]">${channel.name}</h3>
+                    <div class="flex items-center gap-1">
+                        <button onclick="changeInlineChannel(-1)" class="bg-gray-800 text-white text-[10px] px-2 py-0.5 rounded border border-gray-700">◀ Prec</button>
+                        <button onclick="changeInlineChannel(1)" class="bg-gray-800 text-white text-[10px] px-2 py-0.5 rounded border border-gray-700">Succ ▶</button>
+                        <button onclick="stopAllPlayers()" class="text-gray-300 text-[10px] px-2 py-0.5 bg-red-900 hover:bg-red-800 rounded font-bold">✕</button>
+                    </div>
                 </div>
                 <video id="inline-video-${index}" controls autoplay playsinline class="w-full max-h-48 rounded bg-black"></video>
             `;
             
             const video = document.getElementById(`inline-video-${index}`);
             loadVideoSource(video, channel.url, false, index);
+        }
+
+        function changeInlineChannel(direction) {
+            if (activeInlineIndex === null || filteredChannelsCache.length === 0) return;
+            let nextIndex = activeInlineIndex + direction;
+            if (nextIndex < 0) nextIndex = filteredChannelsCache.length - 1;
+            else if (nextIndex >= filteredChannelsCache.length) nextIndex = 0;
+            toggleInlinePlayer(nextIndex);
         }
 
         function playFullscreenByIndex(index) {
@@ -385,25 +406,6 @@
         document.getElementById('drawerSearch').addEventListener('input', function() {
             renderDrawerList(this.value);
         });
-
-        // SWIPE ATTIVO ESCLUSIVAMENTE SULL'AREA MODALE A SCHERMO INTERO
-        let touchStartX = 0, touchStartY = 0;
-        const swipeArea = document.getElementById('swipeArea');
-
-        swipeArea.addEventListener('touchstart', e => {
-            touchStartX = e.changedTouches[0].screenX;
-            touchStartY = e.changedTouches[0].screenY;
-        }, { passive: true });
-
-        swipeArea.addEventListener('touchend', e => {
-            let touchEndX = e.changedTouches[0].screenX;
-            let touchEndY = e.changedTouches[0].screenY;
-            let yDiff = touchStartY - touchEndY;
-
-            if (Math.abs(yDiff) > 50) {
-                changeFullscreenChannel(yDiff > 0 ? 1 : -1);
-            }
-        }, { passive: true });
 
         function changeFullscreenChannel(direction) {
             if (filteredChannelsCache.length === 0) return;
