@@ -100,7 +100,6 @@
 
     <script>
         const m3uUrl = 'https://cavannastefano-sudo.github.io/lista.m3u/IPTV.m3u'; 
-        // Usiamo l'endpoint JSON di TVIT, molto più leggero e compatibile con il browser
         const epgJsonUrl = 'https://tvit.leicaflorianrobert.dev/epg/list.json';
         
         let channels = [];
@@ -139,7 +138,6 @@
                 const jsonData = await response.json();
                 let count = 0;
 
-                // Adattiamo la lettura in base alla struttura JSON di TVIT
                 if (Array.isArray(jsonData)) {
                     jsonData.forEach(item => {
                         if (item.channel && item.title) {
@@ -151,7 +149,6 @@
                         }
                     });
                 } else if (typeof jsonData === 'object') {
-                    // Se la struttura è a oggetti/chiavi
                     for (const [channelId, programs] of Object.entries(jsonData)) {
                         if (Array.isArray(programs) && programs.length > 0) {
                             epgData[channelId] = programs.map(p => p.title || p);
@@ -195,6 +192,11 @@
 
             for (let i = 0; i < lines.length; i++) {
                 let line = lines[i].trim();
+
+                // Ignora le righe di intestazione IPTV (#EXTM3U) per evitare blocchi nel browser
+                if (line.startsWith('#EXTM3U')) {
+                    continue; 
+                }
 
                 if (line.startsWith('#EXTINF:')) {
                     currentChannel = {};
