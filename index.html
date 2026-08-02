@@ -66,48 +66,11 @@
         </div>
     </div>
 
-    <!-- Modale Player a Tutto Schermo per Mobile (CON PULSANTI PREV/NEXT INTEGRATI IN ALTO) -->
-    <div id="fullscreenModal" class="fixed inset-0 bg-black bg-opacity-95 z-50 hidden flex flex-col justify-between p-2">
-        <div class="flex justify-between items-center bg-gray-900 p-2 rounded-t-lg gap-1">
-            <h2 id="fullscreenTitle" class="text-xs font-bold text-blue-400 truncate max-w-[35%]"></h2>
-            
-            <!-- Pulsanti cambio canale rapidi nel player a schermo intero -->
-            <div class="flex gap-1 items-center">
-                <button onclick="changeFullscreenChannel(-1)" class="bg-gray-800 hover:bg-gray-700 text-white text-[10px] px-2 py-1 rounded border border-gray-700">◀ Prec</button>
-                <button onclick="changeFullscreenChannel(1)" class="bg-gray-800 hover:bg-gray-700 text-white text-[10px] px-2 py-1 rounded border border-gray-700">Succ ▶</button>
-                <button onclick="toggleChannelDrawer()" class="bg-blue-600 hover:bg-blue-500 text-white text-[10px] px-2 py-1 rounded">Canali</button>
-                <button onclick="closeFullscreenPlayer()" class="bg-red-600 hover:bg-red-500 text-white text-[10px] px-2 py-1 rounded font-bold">✕</button>
-            </div>
-        </div>
-        
-        <!-- Area Video -->
-        <div class="relative flex-grow flex items-center justify-center bg-black">
-            <video id="fullscreenVideoPlayer" controls autoplay playsinline class="w-full max-h-[75vh] bg-black"></video>
-        </div>
-
-        <p class="text-[10px] text-gray-400 text-center py-1">💡 Usa i tasti ◀ Prec e Succ ▶ in alto per cambiare canale a schermo intero</p>
-
-        <!-- Tendina Laterale Canali per Mobile -->
-        <div id="channelDrawer" class="absolute top-0 right-0 h-full w-72 bg-gray-900 border-l border-gray-700 transform translate-x-full transition-transform duration-300 z-20 flex flex-col shadow-2xl">
-            <div class="p-3 border-b border-gray-700 flex justify-between items-center bg-gray-800">
-                <h3 class="font-bold text-xs text-blue-400">Seleziona Canale</h3>
-                <button onclick="toggleChannelDrawer()" class="text-gray-400 text-sm px-2">✕</button>
-            </div>
-            <div class="p-2 border-b border-gray-800">
-                <input type="text" id="drawerSearch" placeholder="Filtra..." class="w-full px-2 py-1 text-xs rounded bg-gray-800 border border-gray-700 text-white focus:outline-none">
-            </div>
-            <div id="drawerListContainer" class="flex-grow overflow-y-auto divide-y divide-gray-800 text-xs">
-                <!-- Inserito dinamicamente -->
-            </div>
-        </div>
-    </div>
-
     <script>
         const m3uUrl = 'https://cavannastefano-sudo.github.io/lista.m3u/IPTV.m3u'; 
         
         let channels = [];
         let filteredChannelsCache = []; 
-        let currentFullscreenIndex = 0;
         let activeInlineIndex = null;
         
         let currentView = localStorage.getItem('iptv_view_mode') || 'grid';
@@ -276,7 +239,7 @@
                                 <p class="text-[10px] text-gray-400 truncate">${channel.group}</p>
                             </div>
                         </div>
-                        <button onclick="playFullscreenByIndex(${index})" class="bg-blue-600 text-white text-[10px] px-2.5 py-1.5 rounded flex-shrink-0 ml-2">▶ Play</button>
+                        <button onclick="toggleInlinePlayer(${index})" class="bg-blue-600 text-white text-[10px] px-2.5 py-1.5 rounded flex-shrink-0 ml-2">▶ Play</button>
                     `;
                     wrapper.appendChild(card);
 
@@ -297,14 +260,14 @@
                     const item = document.createElement('div');
                     item.className = 'p-2.5 flex items-center justify-between hover:bg-gray-700 transition cursor-pointer';
                     item.innerHTML = `
-                        <div class="flex items-center space-x-2 overflow-hidden flex-grow" onclick="playFullscreenByIndex(${index})">
+                        <div class="flex items-center space-x-2 overflow-hidden flex-grow" onclick="toggleInlinePlayer(${index})">
                             <img src="${channel.logo}" alt="" class="w-7 h-7 object-contain rounded flex-shrink-0" onerror="this.src='https://via.placeholder.com/28?text=TV'">
                             <div class="truncate">
                                 <div class="font-medium text-xs truncate">${channel.name}</div>
                                 <div class="text-[10px] text-gray-400 truncate">${channel.group}</div>
                             </div>
                         </div>
-                        <button onclick="playFullscreenByIndex(${index})" class="bg-blue-600 text-white text-[10px] px-2.5 py-1 rounded">Play</button>
+                        <button onclick="toggleInlinePlayer(${index})" class="bg-blue-600 text-white text-[10px] px-2.5 py-1 rounded">Play</button>
                     `;
                     listDiv.appendChild(item);
                 });
@@ -312,7 +275,7 @@
             }
         }
 
-        // PLAYER INTEGRATO (INLINE) CON I PULSANTI PREV / NEXT
+        // PLAYER INTEGRATO CON PULSANTI, INGRANDIMENTO, E SWIPE TOUCH ATTIVO
         function toggleInlinePlayer(index) {
             if (activeInlineIndex === index) {
                 stopAllPlayers();
@@ -331,18 +294,56 @@
             
             playerDiv.innerHTML = `
                 <div class="flex justify-between items-center mb-1 bg-gray-900 p-1.5 rounded gap-1">
-                    <h3 id="inline-title-${index}" class="text-[11px] font-semibold text-blue-400 truncate max-w-[40%]">${channel.name}</h3>
+                    <h3 id="inline-title-${index}" class="text-[11px] font-semibold text-blue-400 truncate max-w-[35%]">${channel.name}</h3>
                     <div class="flex items-center gap-1">
                         <button onclick="changeInlineChannel(-1)" class="bg-gray-800 text-white text-[10px] px-2 py-0.5 rounded border border-gray-700">◀ Prec</button>
                         <button onclick="changeInlineChannel(1)" class="bg-gray-800 text-white text-[10px] px-2 py-0.5 rounded border border-gray-700">Succ ▶</button>
+                        <button onclick="toggleMaximizePlayer(${index})" id="max-btn-${index}" class="bg-gray-700 text-white text-[10px] px-2 py-0.5 rounded border border-gray-600">⛶</button>
                         <button onclick="stopAllPlayers()" class="text-gray-300 text-[10px] px-2 py-0.5 bg-red-900 hover:bg-red-800 rounded font-bold">✕</button>
                     </div>
                 </div>
-                <video id="inline-video-${index}" controls autoplay playsinline class="w-full max-h-48 rounded bg-black"></video>
+                <div id="video-container-${index}" class="w-full transition-all duration-300">
+                    <video id="inline-video-${index}" controls autoplay playsinline class="w-full max-h-48 rounded bg-black"></video>
+                </div>
             `;
             
             const video = document.getElementById(`inline-video-${index}`);
-            loadVideoSource(video, channel.url, false, index);
+            loadVideoSource(video, channel.url, index);
+
+            // Riattivazione del touch swipe verticale direttamente sul box del video
+            let startY = 0;
+            const videoContainer = document.getElementById(`video-container-${index}`);
+
+            videoContainer.addEventListener('touchstart', e => {
+                startY = e.changedTouches[0].screenY;
+            }, { passive: true });
+
+            videoContainer.addEventListener('touchend', e => {
+                let endY = e.changedTouches[0].screenY;
+                let yDiff = startY - endY;
+
+                if (Math.abs(yDiff) > 50) {
+                    changeInlineChannel(yDiff > 0 ? 1 : -1);
+                }
+            }, { passive: true });
+        }
+
+        function toggleMaximizePlayer(index) {
+            const videoContainer = document.getElementById(`video-container-${index}`);
+            const videoElement = document.getElementById(`inline-video-${index}`);
+            const maxBtn = document.getElementById(`max-btn-${index}`);
+
+            if (videoContainer.classList.contains('max-h-48')) {
+                videoContainer.classList.remove('max-h-48');
+                videoElement.classList.remove('max-h-48');
+                videoElement.classList.add('max-h-[75vh]');
+                maxBtn.textContent = '🗗';
+            } else {
+                videoContainer.classList.add('max-h-48');
+                videoElement.classList.remove('max-h-[75vh]');
+                videoElement.classList.add('max-h-48');
+                maxBtn.textContent = '⛶';
+            }
         }
 
         function changeInlineChannel(direction) {
@@ -353,77 +354,7 @@
             toggleInlinePlayer(nextIndex);
         }
 
-        function playFullscreenByIndex(index) {
-            currentFullscreenIndex = index;
-            const channel = filteredChannelsCache[currentFullscreenIndex];
-            if (!channel) return;
-
-            const modal = document.getElementById('fullscreenModal');
-            const video = document.getElementById('fullscreenVideoPlayer');
-            const title = document.getElementById('fullscreenTitle');
-
-            title.textContent = channel.name;
-            modal.classList.remove('hidden');
-
-            loadVideoSource(video, channel.url, true, 'fs');
-            renderDrawerList();
-        }
-
-        function closeFullscreenPlayer() {
-            stopAllPlayers();
-            document.getElementById('fullscreenModal').classList.add('hidden');
-            document.getElementById('channelDrawer').classList.add('translate-x-full');
-        }
-
-        function toggleChannelDrawer() {
-            const drawer = document.getElementById('channelDrawer');
-            drawer.classList.toggle('translate-x-full');
-        }
-
-        function renderDrawerList(filterText = '') {
-            const container = document.getElementById('drawerListContainer');
-            container.innerHTML = '';
-
-            filteredChannelsCache.forEach((channel, index) => {
-                if (filterText && !channel.name.toLowerCase().includes(filterText.toLowerCase())) return;
-
-                const item = document.createElement('div');
-                item.className = `p-2 flex items-center gap-2 hover:bg-gray-800 cursor-pointer ${index === currentFullscreenIndex ? 'bg-blue-900 bg-opacity-40 border-l-2 border-blue-500' : ''}`;
-                item.innerHTML = `
-                    <img src="${channel.logo}" alt="" class="w-6 h-6 object-contain rounded flex-shrink-0" onerror="this.src='https://via.placeholder.com/24?text=TV'">
-                    <div class="truncate flex-grow">
-                        <div class="font-medium text-xs truncate">${channel.name}</div>
-                        <div class="text-[9px] text-gray-400 truncate">${channel.group}</div>
-                    </div>
-                `;
-                item.addEventListener('click', () => {
-                    playFullscreenByIndex(index);
-                    toggleChannelDrawer();
-                });
-                container.appendChild(item);
-            });
-        }
-
-        document.getElementById('drawerSearch').addEventListener('input', function() {
-            renderDrawerList(this.value);
-        });
-
-        function changeFullscreenChannel(direction) {
-            if (filteredChannelsCache.length === 0) return;
-            currentFullscreenIndex += direction;
-            if (currentFullscreenIndex < 0) currentFullscreenIndex = filteredChannelsCache.length - 1;
-            else if (currentFullscreenIndex >= filteredChannelsCache.length) currentFullscreenIndex = 0;
-            
-            const channel = filteredChannelsCache[currentFullscreenIndex];
-            const video = document.getElementById('fullscreenVideoPlayer');
-            const title = document.getElementById('fullscreenTitle');
-
-            title.textContent = channel.name;
-            loadVideoSource(video, channel.url, true, 'fs');
-            renderDrawerList();
-        }
-
-        function loadVideoSource(videoElement, url, isFullscreen = false, index = 'fs') {
+        function loadVideoSource(videoElement, url, index) {
             if (!window.hlsInstances) window.hlsInstances = {};
             if (Hls.isSupported() && url.includes('.m3u8')) {
                 if (window.hlsInstances[index]) window.hlsInstances[index].destroy();
