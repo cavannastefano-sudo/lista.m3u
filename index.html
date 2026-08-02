@@ -71,7 +71,7 @@
             <video id="fullscreenVideoPlayer" controls autoplay playsinline class="w-full max-h-[70vh] bg-black"></video>
         </div>
 
-        <p class="text-[10px] text-gray-400 text-center py-1">💡 Swipe in alto/basso sul video per cambiare canale</p>
+        <p class="text-[10px] text-gray-400 text-center py-1">💡 Swipe in alto/basso sul video per cambiare canale restando a schermo intero</p>
 
         <div id="channelDrawer" class="absolute top-0 right-0 h-full w-72 bg-gray-900 border-l border-gray-700 transform translate-x-full transition-transform duration-300 z-20 flex flex-col shadow-2xl">
             <div class="p-3 border-b border-gray-700 flex justify-between items-center bg-gray-800">
@@ -92,7 +92,7 @@
         let channels = [];
         let filteredChannelsCache = []; 
         let currentFullscreenIndex = 0;
-        let activeInlineIndex = null; // Memorizza quale player integrato è aperto
+        let activeInlineIndex = null;
         
         let currentView = localStorage.getItem('iptv_view_mode') || 'grid';
         let savedGroup = localStorage.getItem('iptv_selected_group') || '';
@@ -296,9 +296,7 @@
             }
         }
 
-        // PLAYER INTEGRATO (INLINE) CON SWIPE FLUIDO SENZA CHIUDERE LA TENDINA
         function toggleInlinePlayer(index) {
-            // Se clicchi sullo stesso canale che è già aperto, lo chiude
             if (activeInlineIndex === index) {
                 stopAllPlayers();
                 return;
@@ -329,7 +327,6 @@
             const video = document.getElementById(`inline-video-${index}`);
             loadVideoSource(video, channel.url, false, index);
 
-            // Gestione dello swipe verticale per cambiare canale restando dentro il player
             let startX = 0, startY = 0;
             const swipeContainer = document.getElementById(`inline-swipe-area-${index}`);
 
@@ -348,14 +345,12 @@
                     if (nextIndex < 0) nextIndex = filteredChannelsCache.length - 1;
                     else if (nextIndex >= filteredChannelsCache.length) nextIndex = 0;
                     
-                    // Sposta l'interfaccia del player integrato sul nuovo canale senza chiudere il box
                     toggleInlinePlayer(nextIndex);
                 }
             }, { passive: true });
         }
 
         function playFullscreenByIndex(index) {
-            stopAllPlayers();
             currentFullscreenIndex = index;
             const channel = filteredChannelsCache[currentFullscreenIndex];
             if (!channel) return;
@@ -367,7 +362,7 @@
             title.textContent = channel.name;
             modal.classList.remove('hidden');
 
-            loadVideoSource(video, channel.url, true);
+            loadVideoSource(video, channel.url, true, 'fs');
             renderDrawerList();
         }
 
@@ -437,7 +432,15 @@
             currentFullscreenIndex += direction;
             if (currentFullscreenIndex < 0) currentFullscreenIndex = filteredChannelsCache.length - 1;
             else if (currentFullscreenIndex >= filteredChannelsCache.length) currentFullscreenIndex = 0;
-            playFullscreenByIndex(currentFullscreenIndex);
+            
+            // AGGIORNAMENTO DIRETTO SENZA CHIUDERE IL MODALE O IL FULLSCREEN
+            const channel = filteredChannelsCache[currentFullscreenIndex];
+            const video = document.getElementById('fullscreenVideoPlayer');
+            const title = document.getElementById('fullscreenTitle');
+
+            title.textContent = channel.name;
+            loadVideoSource(video, channel.url, true, 'fs');
+            renderDrawerList();
         }
 
         function loadVideoSource(videoElement, url, isFullscreen = false, index = 'fs') {
