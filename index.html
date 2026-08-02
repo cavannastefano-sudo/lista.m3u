@@ -4,11 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>IPTV</title>
-    <!-- Tailwind CSS -->
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <!-- HLS.js per la riproduzione m3u8 -->
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-    <!-- Manifest per installazione PWA / App Chrome -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/plyr@3/dist/plyr.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/plyr@3/dist/plyr.polyfilled.js"></script>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#111827">
     <meta name="color-scheme" content="dark">
@@ -17,7 +16,6 @@
 <body class="bg-gray-900 text-white min-h-screen pb-16">
 
     <div class="container mx-auto px-2 py-4 max-w-md">
-        <!-- Header Mobile Ottimizzato -->
         <header class="mb-4 text-center relative flex items-center justify-between bg-gray-800 p-3 rounded-lg shadow">
             <div class="text-left">
                 <h1 class="text-xl font-bold">📺 IPTV</h1>
@@ -33,7 +31,6 @@
             </div>
         </header>
 
-        <!-- Menu a comparsa Mobile con Stato Playlist e Aggiorna -->
         <div id="mobileMenu" class="hidden bg-gray-800 border border-gray-700 rounded-lg p-3 mb-4 shadow-xl text-xs space-y-2">
             <div class="font-bold text-blue-400 border-b border-gray-700 pb-1">Gestione Playlist</div>
             <div class="text-[11px] text-gray-300">Stato Playlist: <span id="playlistStatus" class="text-yellow-400">Caricamento...</span></div>
@@ -43,7 +40,6 @@
             </div>
         </div>
 
-        <!-- Barra di ricerca e Filtro Gruppi per Mobile -->
         <div class="flex flex-col gap-2 mb-4">
             <input type="text" id="searchInput" placeholder="🔍 Cerca canale..." class="w-full px-3 py-2 rounded-lg bg-gray-800 border border-gray-700 text-sm focus:outline-none focus:border-blue-500">
             
@@ -52,7 +48,6 @@
                     <option value="">Tutte le categorie</option>
                 </select>
 
-                <!-- Pulsanti Cambio Vista compatti -->
                 <div class="flex gap-1 w-1/3">
                     <button id="btnGrid" onclick="setViewMode('grid')" class="flex-1 py-2 rounded-lg bg-gray-800 text-gray-300 font-medium text-xs transition">Griglia</button>
                     <button id="btnList" onclick="setViewMode('list')" class="flex-1 py-2 rounded-lg bg-gray-800 text-gray-300 font-medium text-xs transition">Lista</button>
@@ -60,30 +55,33 @@
             </div>
         </div>
 
-        <!-- Contenitore Canali -->
         <div id="channelsContainer">
             <p class="text-gray-400 text-center text-sm mt-8">Caricamento canali in corso...</p>
         </div>
     </div>
 
-    <!-- Modale Player a Tutto Schermo per Mobile -->
     <div id="fullscreenModal" class="fixed inset-0 bg-black bg-opacity-95 z-50 hidden flex flex-col justify-between p-2">
         <div class="flex justify-between items-center bg-gray-900 p-2 rounded-t-lg">
-            <h2 id="fullscreenTitle" class="text-xs font-bold text-blue-400 truncate max-w-[70%]"></h2>
-            <div class="flex gap-1">
+            <h2 id="fullscreenTitle" class="text-xs font-bold text-blue-400 truncate max-w-[50%]"></h2>
+            <div class="flex gap-1 items-center">
                 <button onclick="toggleChannelDrawer()" class="bg-blue-600 text-white text-[10px] px-2 py-1 rounded">Canali</button>
                 <button onclick="closeFullscreenPlayer()" class="bg-red-600 text-white text-[10px] px-2 py-1 rounded font-bold">✕ Chiudi</button>
             </div>
         </div>
         
-        <!-- Area Video con Swipe -->
-        <div id="swipeArea" class="relative flex-grow flex items-center justify-center bg-black">
-            <video id="fullscreenVideoPlayer" controls autoplay playsinline class="w-full max-h-[70vh] bg-black"></video>
+        <div class="flex justify-between items-center px-2 py-1 bg-gray-900">
+            <button onclick="changeFullscreenChannel(-1)" class="bg-gray-800 hover:bg-gray-700 text-white text-xs px-3 py-1.5 rounded border border-gray-700 active:scale-95 transition">
+                ◀ Canale Precedente
+            </button>
+            <button onclick="changeFullscreenChannel(1)" class="bg-gray-800 hover:bg-gray-700 text-white text-xs px-3 py-1.5 rounded border border-gray-700 active:scale-95 transition">
+                Canale Successivo ▶
+            </button>
         </div>
 
-        <p class="text-[10px] text-gray-400 text-center py-1">💡 Swipe in alto/basso per cambiare canale</p>
+        <div class="relative flex-grow flex items-center justify-center bg-black">
+            <video id="fullscreenVideoPlayer" playsinline controls class="w-full max-h-[65vh] bg-black"></video>
+        </div>
 
-        <!-- Tendina Laterale Canali per Mobile -->
         <div id="channelDrawer" class="absolute top-0 right-0 h-full w-72 bg-gray-900 border-l border-gray-700 transform translate-x-full transition-transform duration-300 z-20 flex flex-col shadow-2xl">
             <div class="p-3 border-b border-gray-700 flex justify-between items-center bg-gray-800">
                 <h3 class="font-bold text-xs text-blue-400">Seleziona Canale</h3>
@@ -93,8 +91,7 @@
                 <input type="text" id="drawerSearch" placeholder="Filtra..." class="w-full px-2 py-1 text-xs rounded bg-gray-800 border border-gray-700 text-white focus:outline-none">
             </div>
             <div id="drawerListContainer" class="flex-grow overflow-y-auto divide-y divide-gray-800 text-xs">
-                <!-- Inserito dinamicamente -->
-            </div>
+                </div>
         </div>
     </div>
 
@@ -103,7 +100,8 @@
         
         let channels = [];
         let filteredChannelsCache = []; 
-        let currentFullscreenIndex = 0; 
+        let currentFullscreenIndex = 0;
+        let plyrInstance = null;
         
         let currentView = localStorage.getItem('iptv_view_mode') || 'grid';
         let savedGroup = localStorage.getItem('iptv_selected_group') || '';
@@ -126,7 +124,6 @@
 
         async function loadPlaylist() {
             try {
-                // Aggiungiamo un parametro casuale per evitare la cache di GitHub/Browser
                 const response = await fetch(m3uUrl + '?t=' + new Date().getTime());
                 if (!response.ok) throw new Error(`HTTP error (${response.status})`);
                 const data = await response.text();
@@ -157,7 +154,6 @@
             for (let i = 0; i < lines.length; i++) {
                 let line = lines[i].trim();
 
-                // Salta le intestazioni M3U
                 if (line.startsWith('#EXTM3U')) {
                     continue; 
                 }
@@ -186,7 +182,6 @@
             const groups = [...new Set(channels.map(c => c.group))].sort();
             const select = document.getElementById('groupSelect');
             
-            // Pulisci le opzioni esistenti mantenendo la prima
             select.innerHTML = '<option value="">Tutte le categorie</option>';
 
             groups.forEach(group => {
@@ -223,6 +218,11 @@
         }
 
         function stopAllPlayers() {
+            if (plyrInstance) {
+                plyrInstance.destroy();
+                plyrInstance = null;
+            }
+
             document.querySelectorAll('video').forEach(video => {
                 video.pause();
                 video.src = '';
@@ -318,10 +318,10 @@
                     <h3 class="text-[11px] font-semibold text-blue-400 truncate">${name}</h3>
                     <button onclick="stopAllPlayers()" class="text-gray-400 text-[10px] px-2 bg-gray-800 rounded">Chiudi ✕</button>
                 </div>
-                <video id="inline-video-${index}" controls autoplay playsinline class="w-full max-h-48 rounded bg-black"></video>
+                <video id="inline-video-${index}" controls playsinline class="w-full max-h-48 rounded bg-black"></video>
             `;
             const video = document.getElementById(`inline-video-${index}`);
-            loadVideoSource(video, url, false, index);
+            loadPlyrSource(video, url, index);
         }
 
         function playFullscreenByIndex(index) {
@@ -337,7 +337,7 @@
             title.textContent = channel.name;
             modal.classList.remove('hidden');
 
-            loadVideoSource(video, channel.url, true);
+            loadPlyrSource(video, channel.url, 'fs');
             renderDrawerList();
         }
 
@@ -380,28 +380,6 @@
             renderDrawerList(this.value);
         });
 
-        let touchStartX = 0, touchStartY = 0, touchEndX = 0, touchEndY = 0;
-        const swipeArea = document.getElementById('swipeArea');
-
-        swipeArea.addEventListener('touchstart', e => {
-            touchStartX = e.changedTouches[0].screenX;
-            touchStartY = e.changedTouches[0].screenY;
-        }, { passive: true });
-
-        swipeArea.addEventListener('touchend', e => {
-            touchEndX = e.changedTouches[0].screenX;
-            touchEndY = e.changedTouches[0].screenY;
-            handleSwipe();
-        }, { passive: true });
-
-        function handleSwipe() {
-            const yDiff = touchStartY - touchEndY;
-            if (Math.abs(yDiff) > 50) {
-                if (yDiff > 0) changeFullscreenChannel(1);
-                else changeFullscreenChannel(-1);
-            }
-        }
-
         function changeFullscreenChannel(direction) {
             if (filteredChannelsCache.length === 0) return;
             currentFullscreenIndex += direction;
@@ -410,17 +388,31 @@
             playFullscreenByIndex(currentFullscreenIndex);
         }
 
-        function loadVideoSource(videoElement, url, isFullscreen = false, index = 'fs') {
+        function loadPlyrSource(videoElement, url, index) {
+            if (plyrInstance) {
+                plyrInstance.destroy();
+                plyrInstance = null;
+            }
+
             if (!window.hlsInstances) window.hlsInstances = {};
+
             if (Hls.isSupported() && url.includes('.m3u8')) {
                 if (window.hlsInstances[index]) window.hlsInstances[index].destroy();
                 const hls = new Hls();
                 window.hlsInstances[index] = hls;
                 hls.loadSource(url);
                 hls.attachMedia(videoElement);
-                hls.on(Hls.Events.MANIFEST_PARSED, () => videoElement.play());
+                hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                    plyrInstance = new Plyr(videoElement, {
+                        controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'fullscreen']
+                    });
+                    videoElement.play();
+                });
             } else {
                 videoElement.src = url;
+                plyrInstance = new Plyr(videoElement, {
+                    controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'fullscreen']
+                });
                 videoElement.play();
             }
         }
