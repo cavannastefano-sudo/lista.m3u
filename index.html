@@ -81,7 +81,7 @@
             <video id="fullscreenVideoPlayer" controls autoplay playsinline class="w-full max-h-[70vh] bg-black"></video>
         </div>
 
-        <p class="text-[10px] text-gray-400 text-center py-1">💡 Swipe in alto/basso per cambiare canale</p>
+        <p class="text-[10px] text-gray-400 text-center py-1">💡 Swipe in alto/basso sul video per cambiare canale</p>
 
         <!-- Tendina Laterale Canali per Mobile -->
         <div id="channelDrawer" class="absolute top-0 right-0 h-full w-72 bg-gray-900 border-l border-gray-700 transform translate-x-full transition-transform duration-300 z-20 flex flex-col shadow-2xl">
@@ -126,7 +126,6 @@
 
         async function loadPlaylist() {
             try {
-                // Aggiungiamo un parametro casuale per evitare la cache di GitHub/Browser
                 const response = await fetch(m3uUrl + '?t=' + new Date().getTime());
                 if (!response.ok) throw new Error(`HTTP error (${response.status})`);
                 const data = await response.text();
@@ -157,7 +156,6 @@
             for (let i = 0; i < lines.length; i++) {
                 let line = lines[i].trim();
 
-                // Salta le intestazioni M3U
                 if (line.startsWith('#EXTM3U')) {
                     continue; 
                 }
@@ -186,7 +184,6 @@
             const groups = [...new Set(channels.map(c => c.group))].sort();
             const select = document.getElementById('groupSelect');
             
-            // Pulisci le opzioni esistenti mantenendo la prima
             select.innerHTML = '<option value="">Tutte le categorie</option>';
 
             groups.forEach(group => {
@@ -266,7 +263,7 @@
                     card.className = 'bg-gray-800 rounded-lg p-3 flex items-center justify-between shadow active:bg-gray-700 transition cursor-pointer';
                     
                     card.innerHTML = `
-                        <div class="flex items-center space-x-2 overflow-hidden flex-grow" onclick="toggleInlinePlayer(${index}, '${channel.url}', '${channel.name.replace(/'/g, "\\'")}')">
+                        <div class="flex items-center space-x-2 overflow-hidden flex-grow" onclick="toggleInlinePlayer(${index})">
                             <img src="${channel.logo}" alt="" class="w-8 h-8 object-contain bg-transparent rounded flex-shrink-0" onerror="this.src='https://via.placeholder.com/32?text=TV'">
                             <div class="truncate">
                                 <h4 class="font-medium text-xs truncate">${channel.name}</h4>
@@ -309,19 +306,26 @@
             }
         }
 
-        function toggleInlinePlayer(index, url, name) {
+        function toggleInlinePlayer(index) {
             stopAllPlayers();
+            const channel = filteredChannelsCache[index];
+            if (!channel) return;
+
             const playerDiv = document.getElementById(`inline-player-${index}`);
             playerDiv.classList.remove('hidden');
+            
             playerDiv.innerHTML = `
-                <div class="flex justify-between items-center mb-1">
-                    <h3 class="text-[11px] font-semibold text-blue-400 truncate">${name}</h3>
-                    <button onclick="stopAllPlayers()" class="text-gray-400 text-[10px] px-2 bg-gray-800 rounded">Chiudi ✕</button>
+                <div class="flex justify-between items-center mb-1 bg-gray-900 p-1.5 rounded">
+                    <h3 class="text-[11px] font-semibold text-blue-400 truncate max-w-[70%]">${channel.name}</h3>
+                    <button onclick="stopAllPlayers()" class="text-gray-300 text-[10px] px-2 py-0.5 bg-red-900 hover:bg-red-800 rounded font-bold">
+                        ✕ Chiudi
+                    </button>
                 </div>
                 <video id="inline-video-${index}" controls autoplay playsinline class="w-full max-h-48 rounded bg-black"></video>
             `;
+            
             const video = document.getElementById(`inline-video-${index}`);
-            loadVideoSource(video, url, false, index);
+            loadVideoSource(video, channel.url, false, index);
         }
 
         function playFullscreenByIndex(index) {
