@@ -8,8 +8,6 @@
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <!-- HLS.js per la riproduzione m3u8 -->
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-    <!-- Pako.js per decomprimere i file .gz (gzip) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
     <!-- Manifest per installazione PWA / App Chrome -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#111827">
@@ -102,7 +100,7 @@
 
     <script>
         const m3uUrl = 'https://cavannastefano-sudo.github.io/lista.m3u/IPTV.m3u'; 
-        const epgUrl = 'http://www.epgitalia.tv/gzip';
+        const epgUrl = 'https://tvit.leicaflorianrobert.dev/epg/list.xml';
         
         let channels = [];
         let epgData = {}; 
@@ -137,11 +135,9 @@
                 const response = await fetch(proxyUrl);
                 if (!response.ok) throw new Error("Errore rete EPG");
                 
-                const arrayBuffer = await response.arrayBuffer();
-                const decompressedData = pako.ungzip(new Uint8Array(arrayBuffer), { to: 'string' });
-                
+                const xmlText = await response.text();
                 const parser = new DOMParser();
-                const xmlDoc = parser.parseFromString(decompressedData, "text/xml");
+                const xmlDoc = parser.parseFromString(xmlText, "text/xml");
                 const programmes = xmlDoc.getElementsByTagName("programme");
                 
                 const now = new Date();
