@@ -100,7 +100,8 @@
 
     <script>
         const m3uUrl = 'https://cavannastefano-sudo.github.io/lista.m3u/IPTV.m3u'; 
-        const epgUrl = 'https://tvit.leicaflorianrobert.dev/epg/list.xml';
+        // Usiamo l'endpoint JSON di TVIT, molto più leggero e compatibile con il browser
+        const epgJsonUrl = 'https://tvit.leicaflorianrobert.dev/epg/list.json';
         
         let channels = [];
         let epgData = {}; 
@@ -131,52 +132,39 @@
 
         async function loadEpg() {
             try {
-                const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(epgUrl);
+                const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(epgJsonUrl);
                 const response = await fetch(proxyUrl);
                 if (!response.ok) throw new Error("Errore rete EPG");
                 
-                const xmlText = await response.text();
-                const parser = new DOMParser();
-                const xmlDoc = parser.parseFromString(xmlText, "text/xml");
-                const programmes = xmlDoc.getElementsByTagName("programme");
-                
-                const now = new Date();
+                const jsonData = await response.json();
                 let count = 0;
 
-                for (let prog of programmes) {
-                    const channelId = prog.getAttribute("channel");
-                    const startStr = prog.getAttribute("start"); 
-                    const stopStr = prog.getAttribute("stop");
-                    const titleElem = prog.getElementsByTagName("title")[0];
-                    
-                    if (channelId && titleElem && startStr && stopStr) {
-                        const startDate = parseEpgDate(startStr);
-                        const stopDate = parseEpgDate(stopStr);
-
-                        if (now >= startDate && now <= stopDate) {
-                            if (!epgData[channelId]) {
-                                epgData[channelId] = [];
+                // Adattiamo la lettura in base alla struttura JSON di TVIT
+                if (Array.isArray(jsonData)) {
+                    jsonData.forEach(item => {
+                        if (item.channel && item.title) {
+                            if (!epgData[item.channel]) {
+                                epgData[item.channel] = [];
                                 count++;
                             }
-                            epgData[channelId].push(titleElem.textContent);
+                            epgData[item.channel].push(item.title);
+                        }
+                    });
+                } else if (typeof jsonData === 'object') {
+                    // Se la struttura è a oggetti/chiavi
+                    for (const [channelId, programs] of Object.entries(jsonData)) {
+                        if (Array.isArray(programs) && programs.length > 0) {
+                            epgData[channelId] = programs.map(p => p.title || p);
+                            count++;
                         }
                     }
                 }
+
                 document.getElementById('epgMobileStatus').textContent = `Attiva (${count} canali)`;
             } catch (e) {
-                console.warn("Errore EPG:", e);
+                console.warn("Errore EPG JSON:", e);
                 document.getElementById('epgMobileStatus').textContent = "Non disponibile";
             }
-        }
-
-        function parseEpgDate(str) {
-            const year = parseInt(str.substr(0, 4), 10);
-            const month = parseInt(str.substr(4, 2), 10) - 1;
-            const day = parseInt(str.substr(6, 2), 10);
-            const hour = parseInt(str.substr(8, 2), 10);
-            const minute = parseInt(str.substr(10, 2), 10);
-            const second = parseInt(str.substr(12, 2), 10);
-            return new Date(Date.UTC(year, month, day, hour - 1, minute, second));
         }
 
         async function loadPlaylist() {
