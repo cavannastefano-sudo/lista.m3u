@@ -6,25 +6,26 @@
     <title>IPTV</title>
     <!-- Tailwind CSS -->
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <!-- Video.js CSS -->
-    <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" />
-    <!-- Video.js JS -->
-    <script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
+    <!-- HLS.js per la riproduzione m3u8 -->
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <!-- Plyr CSS per un player moderno -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/plyr@3/dist/plyr.css"/>
+    <!-- Plyr JS -->
+    <script src="https://cdn.jsdelivr.net/npm/plyr@3/dist/plyr.polyfilled.js"></script>
     <!-- Manifest per installazione PWA / App Chrome -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#111827">
     <meta name="color-scheme" content="dark">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <style>
-        /* Personalizzazione grafica Video.js per adattarlo al tema scuro */
-        .video-js {
-            width: 100%;
-            height: auto;
-            max-height: 65vh;
-            background-color: #000;
+        .plyr__controls .plyr__control.custom-channel-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            padding: 7px 10px;
+            margin: 0 2px;
         }
-        .vjs-theme-city .vjs-control-bar {
-            background: rgba(17, 24, 39, 0.85);
+        .plyr__controls .plyr__control.custom-channel-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
         }
     </style>
 </head>
@@ -80,7 +81,7 @@
         </div>
     </div>
 
-    <!-- Modale Player a Tutto Schermo (con Video.js) -->
+    <!-- Modale Player a Tutto Schermo (con Plyr) -->
     <div id="fullscreenModal" class="fixed inset-0 bg-black bg-opacity-95 z-50 hidden flex flex-col justify-between p-2">
         <div class="flex justify-between items-center bg-gray-900 p-2 rounded-t-lg">
             <h2 id="fullscreenTitle" class="text-xs font-bold text-blue-400 truncate max-w-[60%]"></h2>
@@ -90,23 +91,12 @@
             </div>
         </div>
 
-        <!-- Area Video con Video.js e comandi overlay per cambio canale -->
+        <!-- Area Video Plyr con Swipe attivo -->
         <div id="swipeArea" class="relative flex-grow flex items-center justify-center bg-black">
-            <!-- Il tag video dinamico per Video.js -->
-            <div id="videoContainer" class="w-full flex justify-center items-center"></div>
-
-            <!-- Tasti stile YouTube in sovraimpressione al centro per cambio canale rapido -->
-            <div class="absolute inset-0 flex items-center justify-center gap-12 pointer-events-none">
-                <button onclick="changeFullscreenChannel(-1)" class="pointer-events-auto bg-black bg-opacity-60 hover:bg-opacity-85 text-white p-3 rounded-full border border-gray-700 shadow-lg active:scale-95 transition flex items-center justify-center" title="Canale Precedente">
-                    <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
-                </button>
-                <button onclick="changeFullscreenChannel(1)" class="pointer-events-auto bg-black bg-opacity-60 hover:bg-opacity-85 text-white p-3 rounded-full border border-gray-700 shadow-lg active:scale-95 transition flex items-center justify-center" title="Canale Successivo">
-                    <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
-                </button>
-            </div>
+            <video id="fullscreenVideoPlayer" playsinline controls class="w-full max-h-[70vh] bg-black"></video>
         </div>
 
-        <p class="text-[10px] text-gray-400 text-center py-1">💡 Usa i tasti al centro o fai swipe in alto/basso per cambiare canale</p>
+        <p class="text-[10px] text-gray-400 text-center py-1">💡 Usa i simboli ⏮ ⏭ nella barra o fai swipe in alto/basso per cambiare canale</p>
 
         <!-- Tendina Laterale Canali per Mobile -->
         <div id="channelDrawer" class="absolute top-0 right-0 h-full w-72 bg-gray-900 border-l border-gray-700 transform translate-x-full transition-transform duration-300 z-20 flex flex-col shadow-2xl">
@@ -129,7 +119,7 @@
         let channels = [];
         let filteredChannelsCache = []; 
         let currentFullscreenIndex = 0;
-        let videoJsPlayer = null;
+        let plyrInstance = null;
         
         let currentView = localStorage.getItem('iptv_view_mode') || 'grid';
         let savedGroup = localStorage.getItem('iptv_selected_group') || '';
@@ -246,9 +236,9 @@
         }
 
         function stopAllPlayers() {
-            if (videoJsPlayer) {
-                videoJsPlayer.dispose();
-                videoJsPlayer = null;
+            if (plyrInstance) {
+                plyrInstance.destroy();
+                plyrInstance = null;
             }
 
             document.querySelectorAll('video').forEach(video => {
@@ -346,15 +336,10 @@
                     <h3 class="text-[11px] font-semibold text-blue-400 truncate">${name}</h3>
                     <button onclick="stopAllPlayers()" class="text-gray-400 text-[10px] px-2 bg-gray-800 rounded">Chiudi ✕</button>
                 </div>
-                <video id="inline-video-${index}" class="video-js vjs-big-play-centered w-full max-h-48" controls preload="auto" playsinline></video>
+                <video id="inline-video-${index}" controls playsinline class="w-full max-h-48 rounded bg-black"></video>
             `;
-            
-            videoJsPlayer = videojs(`inline-video-${index}`, {
-                fluid: false,
-                html5: { vhs: { overrideNative: true } }
-            });
-            videoJsPlayer.src({ src: url, type: 'application/x-mpegURL' });
-            videoJsPlayer.play().catch(() => {});
+            const video = document.getElementById(`inline-video-${index}`);
+            loadPlyrSource(video, url, index);
         }
 
         function playFullscreenByIndex(index) {
@@ -364,26 +349,13 @@
             if (!channel) return;
 
             const modal = document.getElementById('fullscreenModal');
+            const video = document.getElementById('fullscreenVideoPlayer');
             const title = document.getElementById('fullscreenTitle');
-            const videoContainer = document.getElementById('videoContainer');
 
             title.textContent = channel.name;
             modal.classList.remove('hidden');
 
-            // Inserisce l'elemento video fresco per Video.js nel modale
-            videoContainer.innerHTML = `<video id="modal-video-player" class="video-js vjs-big-play-centered" controls preload="auto" playsinline></video>`;
-
-            videoJsPlayer = videojs('modal-video-player', {
-                fluid: false,
-                responsive: true,
-                html5: { vhs: { overrideNative: true } }
-            });
-
-            videoJsPlayer.src({ src: channel.url, type: 'application/x-mpegURL' });
-            videoJsPlayer.ready(() => {
-                videoJsPlayer.play().catch(() => {});
-            });
-
+            loadPlyrSource(video, channel.url, 'fs');
             renderDrawerList();
         }
 
@@ -426,7 +398,7 @@
             renderDrawerList(this.value);
         });
 
-        // Gestione Touch Swipe in alto e in basso sul player
+        // Gestione Touch Swipe in alto e in basso
         let touchStartY = 0;
         const swipeArea = document.getElementById('swipeArea');
 
@@ -449,6 +421,83 @@
             if (currentFullscreenIndex < 0) currentFullscreenIndex = filteredChannelsCache.length - 1;
             else if (currentFullscreenIndex >= filteredChannelsCache.length) currentFullscreenIndex = 0;
             playFullscreenByIndex(currentFullscreenIndex);
+        }
+
+        function loadPlyrSource(videoElement, url, index) {
+            if (plyrInstance) {
+                plyrInstance.destroy();
+                plyrInstance = null;
+            }
+
+            if (!window.hlsInstances) window.hlsInstances = {};
+
+            const plyrOptions = {
+                controls: [
+                    'play-large',
+                    'play',
+                    'custom-prev',
+                    'custom-next',
+                    'current-time',
+                    'mute',
+                    'volume',
+                    'fullscreen'
+                ],
+                tooltips: { controls: true },
+                i18n: {
+                    restart: 'Riavvia',
+                    play: 'Play',
+                    pause: 'Pausa',
+                    volume: 'Volume',
+                    fullscreen: 'Schermo intero',
+                }
+            };
+
+            if (Hls.isSupported() && url.includes('.m3u8')) {
+                if (window.hlsInstances[index]) window.hlsInstances[index].destroy();
+                const hls = new Hls();
+                window.hlsInstances[index] = hls;
+                hls.loadSource(url);
+                hls.attachMedia(videoElement);
+                hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                    plyrInstance = new Plyr(videoElement, plyrOptions);
+                    injectChannelButtons();
+                    videoElement.play();
+                });
+            } else {
+                videoElement.src = url;
+                plyrInstance = new Plyr(videoElement, plyrOptions);
+                injectChannelButtons();
+                videoElement.play();
+            }
+        }
+
+        function injectChannelButtons() {
+            setTimeout(() => {
+                const controls = document.querySelector('.plyr__controls');
+                if (!controls || document.getElementById('plyrPrevBtn')) return;
+
+                const playBtn = controls.querySelector('[data-plyr="play"]');
+                if (!playBtn) return;
+
+                const prevBtn = document.createElement('button');
+                prevBtn.type = 'button';
+                prevBtn.id = 'plyrPrevBtn';
+                prevBtn.className = 'plyr__control custom-channel-btn';
+                prevBtn.title = 'Canale Precedente';
+                prevBtn.innerHTML = '<span style="font-size: 14px; font-weight: bold;">⏮</span>';
+                prevBtn.onclick = () => changeFullscreenChannel(-1);
+
+                const nextBtn = document.createElement('button');
+                nextBtn.type = 'button';
+                nextBtn.id = 'plyrNextBtn';
+                nextBtn.className = 'plyr__control custom-channel-btn';
+                nextBtn.title = 'Canale Successivo';
+                nextBtn.innerHTML = '<span style="font-size: 14px; font-weight: bold;">⏭</span>';
+                nextBtn.onclick = () => changeFullscreenChannel(1);
+
+                playBtn.parentNode.insertBefore(prevBtn, playBtn);
+                playBtn.parentNode.insertBefore(nextBtn, playBtn.nextSibling);
+            }, 300);
         }
 
         document.getElementById('searchInput').addEventListener('input', () => {
