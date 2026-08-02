@@ -66,16 +66,17 @@
         </div>
     </div>
 
-    <!-- Modale Player a Tutto Schermo per Mobile -->
+    <!-- Modale Player a Tutto Schermo per Mobile (CON PULSANTI PREV/NEXT INTEGRATI IN ALTO) -->
     <div id="fullscreenModal" class="fixed inset-0 bg-black bg-opacity-95 z-50 hidden flex flex-col justify-between p-2">
-        <div class="flex justify-between items-center bg-gray-900 p-2 rounded-t-lg">
-            <h2 id="fullscreenTitle" class="text-xs font-bold text-blue-400 truncate max-w-[60%]"></h2>
-            <!-- Pulsanti cambio canale rapidi anche nella barra in alto del modale -->
+        <div class="flex justify-between items-center bg-gray-900 p-2 rounded-t-lg gap-1">
+            <h2 id="fullscreenTitle" class="text-xs font-bold text-blue-400 truncate max-w-[35%]"></h2>
+            
+            <!-- Pulsanti cambio canale rapidi nel player a schermo intero -->
             <div class="flex gap-1 items-center">
-                <button onclick="changeFullscreenChannel(-1)" class="bg-gray-800 text-white text-[10px] px-2 py-1 rounded border border-gray-700">◀ Prec</button>
-                <button onclick="changeFullscreenChannel(1)" class="bg-gray-800 text-white text-[10px] px-2 py-1 rounded border border-gray-700">Succ ▶</button>
-                <button onclick="toggleChannelDrawer()" class="bg-blue-600 text-white text-[10px] px-2 py-1 rounded ml-1">Canali</button>
-                <button onclick="closeFullscreenPlayer()" class="bg-red-600 text-white text-[10px] px-2 py-1 rounded font-bold">✕</button>
+                <button onclick="changeFullscreenChannel(-1)" class="bg-gray-800 hover:bg-gray-700 text-white text-[10px] px-2 py-1 rounded border border-gray-700">◀ Prec</button>
+                <button onclick="changeFullscreenChannel(1)" class="bg-gray-800 hover:bg-gray-700 text-white text-[10px] px-2 py-1 rounded border border-gray-700">Succ ▶</button>
+                <button onclick="toggleChannelDrawer()" class="bg-blue-600 hover:bg-blue-500 text-white text-[10px] px-2 py-1 rounded">Canali</button>
+                <button onclick="closeFullscreenPlayer()" class="bg-red-600 hover:bg-red-500 text-white text-[10px] px-2 py-1 rounded font-bold">✕</button>
             </div>
         </div>
         
@@ -84,7 +85,7 @@
             <video id="fullscreenVideoPlayer" controls autoplay playsinline class="w-full max-h-[75vh] bg-black"></video>
         </div>
 
-        <p class="text-[10px] text-gray-400 text-center py-1">💡 Usa i tasti in alto o la tendina per cambiare canale</p>
+        <p class="text-[10px] text-gray-400 text-center py-1">💡 Usa i tasti ◀ Prec e Succ ▶ in alto per cambiare canale a schermo intero</p>
 
         <!-- Tendina Laterale Canali per Mobile -->
         <div id="channelDrawer" class="absolute top-0 right-0 h-full w-72 bg-gray-900 border-l border-gray-700 transform translate-x-full transition-transform duration-300 z-20 flex flex-col shadow-2xl">
@@ -311,7 +312,7 @@
             }
         }
 
-        // PLAYER INTEGRATO (INLINE) CON I PULSANTI PREV / NEXT INTEGRATI NELLA BARRA
+        // PLAYER INTEGRATO (INLINE) CON I PULSANTI PREV / NEXT
         function toggleInlinePlayer(index) {
             if (activeInlineIndex === index) {
                 stopAllPlayers();
