@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IPTV Web Viewer</title>
+    <title>IPTV</title>
     <!-- Tailwind CSS -->
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <!-- HLS.js per la riproduzione m3u8 -->
@@ -13,18 +13,12 @@
     <meta name="theme-color" content="#111827">
     <meta name="color-scheme" content="dark">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <style>
-        /* Rende trasparente la barra di navigazione inferiore su Android/Chrome */
-        body {
-            navigation-bar-color: transparent;
-        }
-    </style>
 </head>
 <body class="bg-gray-900 text-white min-h-screen">
 
     <div class="container mx-auto px-4 py-8">
         <header class="mb-8 text-center relative">
-            <h1 class="text-3xl font-bold mb-2">📺 La mia Lista IPTV</h1>
+            <h1 class="text-3xl font-bold mb-2">📺 IPTV</h1>
             <p class="text-gray-400">Visualizza e riproduci i canali dal tuo file IPTV.m3u su GitHub</p>
             <!-- Pulsante Aggiorna in alto -->
             <button onclick="location.reload()" class="absolute top-0 right-0 bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 py-1.5 rounded text-sm flex items-center gap-1 transition">
@@ -49,7 +43,7 @@
 
         <!-- Contenitore Canali -->
         <div id="channelsContainer">
-            <p class="text-gray-400 text-center">Caricamento canali in corso...</p>
+            <p class="text-gray-400 text-center">Caricamento canali e guida TV in corso...</p>
         </div>
     </div>
 
@@ -93,12 +87,67 @@
 
     <script>
         const m3uUrl = 'https://cavannastefano-sudo.github.io/lista.m3u/IPTV.m3u'; 
+        const epgUrl = 'http://rebrand.ly/epgitalia';
+        
         let channels = [];
+        let epgData = {}; // Memorizza i programmi EPG per tvg-id o nome
         let filteredChannelsCache = []; 
         let currentFullscreenIndex = 0; 
         
         let currentView = localStorage.getItem('iptv_view_mode') || 'grid';
         let savedGroup = localStorage.getItem('iptv_selected_group') || '';
+
+        async function initApp() {
+            await loadEpg();
+            await loadPlaylist();
+        }
+
+        async function loadEpg() {
+            try {
+                // Utilizziamo un proxy CORS pubblico per leggere il file XML esterno dal browser
+                const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(epgUrl);
+                const response = await fetch(proxyUrl);
+                if (!response.ok) return;
+                const xmlText = await response.text();
+                
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+                const programmes = xmlDoc.getElementsByTagName("programme");
+                
+                const now = new Date();
+
+                for (let prog of programmes) {
+                    const channelId = prog.getAttribute("channel");
+                    const startStr = prog.getAttribute("start"); // Formato YYYYMMDDHHMMSS +ZZZZ
+                    const stopStr = prog.getAttribute("stop");
+                    const titleElem = prog.getElementsByTagName("title")[0];
+                    
+                    if (channelId && titleElem && startStr && stopStr) {
+                        const startDate = parseEpgDate(startStr);
+                        const stopDate = parseEpgDate(stopStr);
+
+                        if (now >= startDate && now <= stopDate) {
+                            if (!epgData[channelId]) {
+                                epgData[channelId] = [];
+                            }
+                            epgData[channelId].push(titleElem.textContent);
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn("Impossibile caricare la guida TV EPG:", e);
+            }
+        }
+
+        function parseEpgDate(str) {
+            const year = parseInt(str.substr(0, 4), 10);
+            const month = parseInt(str.substr(4, 2), 10) - 1;
+            const day = parseInt(str.substr(6, 2), 10);
+            const hour = parseInt(str.substr(8, 2), 10);
+            const minute = parseInt(str.substr(10, 2), 10);
+            const second = parseInt(str.substr(12, 2), 10);
+            return new Date(Date.UTC(year, month, day, hour - 1, minute, second)); // Conversione orario
+        }
 
         async function loadPlaylist() {
             try {
@@ -139,11 +188,23 @@
                     let groupMatch = line.match(/group-title="([^"]*)"/);
                     currentChannel.group = groupMatch ? groupMatch[1] : 'Altro';
 
+                    let idMatch = line.match(/tvg-id="([^"]*)"/);
+                    currentChannel.tvgId = idMatch ? idMatch[1] : '';
+
                     let nameParts = line.split(',');
                     currentChannel.name = nameParts[nameParts.length - 1].trim();
                 } else if (line && !line.startsWith('#')) {
                     currentChannel.url = line;
                     if (currentChannel.name && currentChannel.url) {
+                        // Cerca programma in onda tramite tvg-id o nome canale
+                        let currentShow = "In onda ora non disponibile";
+                        if (currentChannel.tvgId && epgData[currentChannel.tvgId]) {
+                            currentShow = epgData[currentChannel.tvgId][0];
+                        } else if (epgData[currentChannel.name]) {
+                            currentShow = epgData[currentChannel.name][0];
+                        }
+                        currentChannel.nowPlaying = currentShow;
+                        
                         channels.push(currentChannel);
                     }
                 }
@@ -238,6 +299,7 @@
                             <img src="${channel.logo}" alt="" class="w-10 h-10 object-contain bg-transparent rounded p-1 flex-shrink-0" onerror="this.src='https://via.placeholder.com/40?text=TV'">
                             <div class="truncate">
                                 <h4 class="font-medium text-sm truncate">${channel.name}</h4>
+                                <p class="text-[11px] text-blue-400 truncate">▶ ${channel.nowPlaying}</p>
                                 <span class="text-xs text-gray-400">${channel.group}</span>
                             </div>
                         </div>
@@ -264,7 +326,7 @@
                     <thead>
                         <tr class="border-b border-gray-700 text-gray-400 text-xs uppercase">
                             <th class="p-3 w-16 text-center">Logo</th>
-                            <th class="p-3">Nome Canale</th>
+                            <th class="p-3">Nome Canale / In Onda Ora</th>
                             <th class="p-3">Categoria</th>
                             <th class="p-3 text-right">Azione</th>
                         </tr>
@@ -282,7 +344,10 @@
                         <td class="p-3 text-center cursor-pointer" onclick="toggleInlinePlayer(${index}, '${channel.url}', '${channel.name.replace(/'/g, "\\'")}')">
                             <img src="${channel.logo}" alt="" class="w-8 h-8 object-contain bg-transparent rounded p-0.5 mx-auto" onerror="this.src='https://via.placeholder.com/32?text=TV'">
                         </td>
-                        <td class="p-3 font-medium truncate max-w-xs cursor-pointer" onclick="toggleInlinePlayer(${index}, '${channel.url}', '${channel.name.replace(/'/g, "\\'")}')">${channel.name}</td>
+                        <td class="p-3 font-medium cursor-pointer" onclick="toggleInlinePlayer(${index}, '${channel.url}', '${channel.name.replace(/'/g, "\\'")}')">
+                            <div class="truncate max-w-xs">${channel.name}</div>
+                            <div class="text-xs text-blue-400 truncate max-w-xs">▶ ${channel.nowPlaying}</div>
+                        </td>
                         <td class="p-3 text-gray-400 text-xs cursor-pointer" onclick="toggleInlinePlayer(${index}, '${channel.url}', '${channel.name.replace(/'/g, "\\'")}')">${channel.group}</td>
                         <td class="p-3 text-right">
                             <button onclick="playFullscreenByIndex(${index})" class="bg-blue-600 hover:bg-blue-500 text-xs px-3 py-1 rounded">Riproduci</button>
@@ -350,7 +415,7 @@
             const video = document.getElementById('fullscreenVideoPlayer');
             const title = document.getElementById('fullscreenTitle');
 
-            title.textContent = `(${currentFullscreenIndex + 1}/${filteredChannelsCache.length}) ${channel.name}`;
+            title.textContent = `(${currentFullscreenIndex + 1}/${filteredChannelsCache.length}) ${channel.name} - ${channel.nowPlaying}`;
             modal.classList.remove('hidden');
 
             loadVideoSource(video, channel.url, true);
@@ -383,7 +448,7 @@
                     <img src="${channel.logo}" alt="" class="w-7 h-7 object-contain bg-transparent rounded p-0.5 flex-shrink-0" onerror="this.src='https://via.placeholder.com/28?text=TV'">
                     <div class="truncate flex-grow">
                         <div class="font-medium text-xs truncate ${index === currentFullscreenIndex ? 'text-blue-400 font-bold' : ''}">${channel.name}</div>
-                        <div class="text-[10px] text-gray-400">${channel.group}</div>
+                        <div class="text-[10px] text-gray-400 truncate">${channel.nowPlaying}</div>
                     </div>
                 `;
                 item.addEventListener('click', () => {
@@ -492,7 +557,8 @@
             renderChannels(filteredChannelsCache);
         }
 
-        loadPlaylist();
+        // Avvio dell'applicazione
+        initApp();
     </script>
 </body>
 </html>
