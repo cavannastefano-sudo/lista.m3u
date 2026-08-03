@@ -6,32 +6,13 @@
     <title>IPTV</title>
     <!-- Tailwind CSS -->
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <!-- Clappr Player JS -->
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@clappr/player@latest/dist/clappr.min.js"></script>
+    <!-- HLS.js per la riproduzione m3u8 -->
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <!-- Manifest per installazione PWA / App Chrome -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#111827">
     <meta name="color-scheme" content="dark">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <style>
-        .custom-clappr-btn {
-            background: rgba(255, 255, 255, 0.15);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 6px;
-            padding: 6px 12px;
-            font-size: 12px;
-            font-weight: bold;
-            transition: background 0.2s;
-        }
-        .custom-clappr-btn:active {
-            transform: scale(0.95);
-        }
-        /* Assicura che il player occupi lo spazio correttamente */
-        #clapprPlayerContainer div {
-            width: 100% !important;
-            height: 100% !important;
-        }
-    </style>
 </head>
 <body class="bg-gray-900 text-white min-h-screen pb-16">
 
@@ -85,7 +66,7 @@
         </div>
     </div>
 
-    <!-- Modale Player a Tutto Schermo (con Clappr) -->
+    <!-- Modale Player a Tutto Schermo -->
     <div id="fullscreenModal" class="fixed inset-0 bg-black bg-opacity-95 z-50 hidden flex flex-col justify-between p-2">
         <div class="flex justify-between items-center bg-gray-900 p-2 rounded-t-lg">
             <h2 id="fullscreenTitle" class="text-xs font-bold text-blue-400 truncate max-w-[60%]"></h2>
@@ -95,20 +76,20 @@
             </div>
         </div>
 
-        <!-- Barra superiore extra con i tasti canale rapidi ⏮ ⏭ -->
-        <div class="flex justify-between items-center bg-gray-900 px-3 py-1">
-            <button onclick="changeFullscreenChannel(-1)" class="custom-clappr-btn text-gray-200 flex items-center gap-1">
+        <!-- Barra di controllo canali sopra al video -->
+        <div class="flex justify-between items-center bg-gray-900 px-3 py-2 border-b border-gray-800">
+            <button onclick="changeFullscreenChannel(-1)" class="bg-gray-800 hover:bg-gray-700 text-white text-xs px-3 py-1.5 rounded border border-gray-700 font-bold active:scale-95 transition">
                 ⏮ Canale Prec.
             </button>
             <span class="text-[10px] text-gray-400">💡 Swipe verticale attivo</span>
-            <button onclick="changeFullscreenChannel(1)" class="custom-clappr-btn text-gray-200 flex items-center gap-1">
+            <button onclick="changeFullscreenChannel(1)" class="bg-gray-800 hover:bg-gray-700 text-white text-xs px-3 py-1.5 rounded border border-gray-700 font-bold active:scale-95 transition">
                 Canale Succ. ⏭
             </button>
         </div>
 
-        <!-- Area Video Clappr con Swipe -->
+        <!-- Area Video Nativo con Swipe -->
         <div id="swipeArea" class="relative flex-grow flex items-center justify-center bg-black">
-            <div id="clapprPlayerContainer" class="w-full max-h-[68vh] flex items-center justify-center"></div>
+            <video id="fullscreenVideoPlayer" controls autoplay playsinline class="w-full max-h-[68vh] bg-black"></video>
         </div>
 
         <!-- Tendina Laterale Canali per Mobile -->
@@ -132,7 +113,6 @@
         let channels = [];
         let filteredChannelsCache = []; 
         let currentFullscreenIndex = 0;
-        let clapprPlayerInstance = null;
         
         let currentView = localStorage.getItem('iptv_view_mode') || 'grid';
         let savedGroup = localStorage.getItem('iptv_selected_group') || '';
@@ -249,11 +229,6 @@
         }
 
         function stopAllPlayers() {
-            if (clapprPlayerInstance) {
-                clapprPlayerInstance.destroy();
-                clapprPlayerInstance = null;
-            }
-
             document.querySelectorAll('video').forEach(video => {
                 video.pause();
                 video.src = '';
@@ -349,9 +324,10 @@
                     <h3 class="text-[11px] font-semibold text-blue-400 truncate">${name}</h3>
                     <button onclick="stopAllPlayers()" class="text-gray-400 text-[10px] px-2 bg-gray-800 rounded">Chiudi ✕</button>
                 </div>
-                <div id="inline-clappr-${index}" class="w-full max-h-48"></div>
+                <video id="inline-video-${index}" controls autoplay playsinline class="w-full max-h-48 rounded bg-black"></video>
             `;
-            initClappr(`inline-clappr-${index}`, url, true);
+            const video = document.getElementById(`inline-video-${index}`);
+            loadVideoSource(video, url, false, index);
         }
 
         function playFullscreenByIndex(index) {
@@ -361,14 +337,13 @@
             if (!channel) return;
 
             const modal = document.getElementById('fullscreenModal');
+            const video = document.getElementById('fullscreenVideoPlayer');
             const title = document.getElementById('fullscreenTitle');
-            const container = document.getElementById('clapprPlayerContainer');
 
             title.textContent = channel.name;
             modal.classList.remove('hidden');
-            container.innerHTML = '';
 
-            initClappr('clapprPlayerContainer', channel.url, false);
+            loadVideoSource(video, channel.url, true, 'fs');
             renderDrawerList();
         }
 
@@ -436,20 +411,19 @@
             playFullscreenByIndex(currentFullscreenIndex);
         }
 
-        function initClappr(parentId, url, isInline = false) {
-            if (clapprPlayerInstance) {
-                clapprPlayerInstance.destroy();
-                clapprPlayerInstance = null;
+        function loadVideoSource(videoElement, url, isFullscreen = false, index = 'fs') {
+            if (!window.hlsInstances) window.hlsInstances = {};
+            if (Hls.isSupported() && url.includes('.m3u8')) {
+                if (window.hlsInstances[index]) window.hlsInstances[index].destroy();
+                const hls = new Hls();
+                window.hlsInstances[index] = hls;
+                hls.loadSource(url);
+                hls.attachMedia(videoElement);
+                hls.on(Hls.Events.MANIFEST_PARSED, () => videoElement.play());
+            } else {
+                videoElement.src = url;
+                videoElement.play();
             }
-
-            clapprPlayerInstance = new Clappr.Player({
-                source: url,
-                parentId: '#' + parentId,
-                autoPlay: true,
-                width: '100%',
-                height: isInline ? '180px' : '100%',
-                plugins: [],
-            });
         }
 
         document.getElementById('searchInput').addEventListener('input', () => {
