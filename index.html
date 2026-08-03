@@ -6,23 +6,15 @@
     <title>IPTV</title>
     <!-- Tailwind CSS -->
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <!-- HLS.js per la riproduzione m3u8 -->
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-    <!-- Flowplayer CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@flowplayer/player/dist/flowplayer.min.css">
-    <!-- Flowplayer JS -->
-    <script src="https://cdn.jsdelivr.net/npm/@flowplayer/player/dist/flowplayer.min.js"></script>
+    <!-- Clappr Player JS -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@clappr/player@latest/dist/clappr.min.js"></script>
     <!-- Manifest per installazione PWA / App Chrome -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#111827">
     <meta name="color-scheme" content="dark">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <style>
-        .fp-engine {
-            background-color: #000;
-        }
-        /* Stile personalizzato per i tasti canale extra accanto a Flowplayer */
-        .custom-fp-btn {
+        .custom-clappr-btn {
             background: rgba(255, 255, 255, 0.15);
             border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 6px;
@@ -31,8 +23,13 @@
             font-weight: bold;
             transition: background 0.2s;
         }
-        .custom-fp-btn:active {
+        .custom-clappr-btn:active {
             transform: scale(0.95);
+        }
+        /* Assicura che il player occupi lo spazio correttamente */
+        #clapprPlayerContainer div {
+            width: 100% !important;
+            height: 100% !important;
         }
     </style>
 </head>
@@ -88,7 +85,7 @@
         </div>
     </div>
 
-    <!-- Modale Player a Tutto Schermo (con Flowplayer) -->
+    <!-- Modale Player a Tutto Schermo (con Clappr) -->
     <div id="fullscreenModal" class="fixed inset-0 bg-black bg-opacity-95 z-50 hidden flex flex-col justify-between p-2">
         <div class="flex justify-between items-center bg-gray-900 p-2 rounded-t-lg">
             <h2 id="fullscreenTitle" class="text-xs font-bold text-blue-400 truncate max-w-[60%]"></h2>
@@ -100,18 +97,18 @@
 
         <!-- Barra superiore extra con i tasti canale rapidi ⏮ ⏭ -->
         <div class="flex justify-between items-center bg-gray-900 px-3 py-1">
-            <button onclick="changeFullscreenChannel(-1)" class="custom-fp-btn text-gray-200 flex items-center gap-1">
+            <button onclick="changeFullscreenChannel(-1)" class="custom-clappr-btn text-gray-200 flex items-center gap-1">
                 ⏮ Canale Prec.
             </button>
             <span class="text-[10px] text-gray-400">💡 Swipe verticale attivo</span>
-            <button onclick="changeFullscreenChannel(1)" class="custom-fp-btn text-gray-200 flex items-center gap-1">
+            <button onclick="changeFullscreenChannel(1)" class="custom-clappr-btn text-gray-200 flex items-center gap-1">
                 Canale Succ. ⏭
             </button>
         </div>
 
-        <!-- Area Video Flowplayer con Swipe -->
+        <!-- Area Video Clappr con Swipe -->
         <div id="swipeArea" class="relative flex-grow flex items-center justify-center bg-black">
-            <div id="flowplayerContainer" class="w-full max-h-[68vh]"></div>
+            <div id="clapprPlayerContainer" class="w-full max-h-[68vh] flex items-center justify-center"></div>
         </div>
 
         <!-- Tendina Laterale Canali per Mobile -->
@@ -135,7 +132,7 @@
         let channels = [];
         let filteredChannelsCache = []; 
         let currentFullscreenIndex = 0;
-        let flowPlayerInstance = null;
+        let clapprPlayerInstance = null;
         
         let currentView = localStorage.getItem('iptv_view_mode') || 'grid';
         let savedGroup = localStorage.getItem('iptv_selected_group') || '';
@@ -252,9 +249,9 @@
         }
 
         function stopAllPlayers() {
-            if (flowPlayerInstance) {
-                flowPlayerInstance.destroy();
-                flowPlayerInstance = null;
+            if (clapprPlayerInstance) {
+                clapprPlayerInstance.destroy();
+                clapprPlayerInstance = null;
             }
 
             document.querySelectorAll('video').forEach(video => {
@@ -352,9 +349,9 @@
                     <h3 class="text-[11px] font-semibold text-blue-400 truncate">${name}</h3>
                     <button onclick="stopAllPlayers()" class="text-gray-400 text-[10px] px-2 bg-gray-800 rounded">Chiudi ✕</button>
                 </div>
-                <div id="inline-fp-${index}" class="w-full max-h-48"></div>
+                <div id="inline-clappr-${index}" class="w-full max-h-48"></div>
             `;
-            initFlowplayer(`inline-fp-${index}`, url, index);
+            initClappr(`inline-clappr-${index}`, url, true);
         }
 
         function playFullscreenByIndex(index) {
@@ -365,13 +362,13 @@
 
             const modal = document.getElementById('fullscreenModal');
             const title = document.getElementById('fullscreenTitle');
-            const container = document.getElementById('flowplayerContainer');
+            const container = document.getElementById('clapprPlayerContainer');
 
             title.textContent = channel.name;
             modal.classList.remove('hidden');
             container.innerHTML = '';
 
-            initFlowplayer('flowplayerContainer', channel.url, 'fs');
+            initClappr('clapprPlayerContainer', channel.url, false);
             renderDrawerList();
         }
 
@@ -439,22 +436,19 @@
             playFullscreenByIndex(currentFullscreenIndex);
         }
 
-        function initFlowplayer(containerId, url, index) {
-            if (flowPlayerInstance) {
-                flowPlayerInstance.destroy();
-                flowPlayerInstance = null;
+        function initClappr(parentId, url, isInline = false) {
+            if (clapprPlayerInstance) {
+                clapprPlayerInstance.destroy();
+                clapprPlayerInstance = null;
             }
 
-            if (!window.hlsInstances) window.hlsInstances = {};
-
-            const container = document.getElementById(containerId);
-            if (!container) return;
-
-            // Inizializzazione Flowplayer con supporto HLS
-            flowPlayerInstance = flowplayer(container, {
-                src: url,
-                autoplay: true,
-                ratio: 16/9
+            clapprPlayerInstance = new Clappr.Player({
+                source: url,
+                parentId: '#' + parentId,
+                autoPlay: true,
+                width: '100%',
+                height: isInline ? '180px' : '100%',
+                plugins: [],
             });
         }
 
