@@ -13,23 +13,38 @@
     <meta name="theme-color" content="#111827">
     <meta name="color-scheme" content="dark">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <style>
+        /* Stile contatore visite identico a Open-Meteo */
+        .visit-counters { display: flex; align-items: center; gap: 6px; }
+        .visit-counter { color: #9ca3af; font-size: 10px; font-weight: normal; opacity: 0.85; padding: 3px 6px; border-radius: 4px; background: rgba(255,255,255,0.05); white-space: nowrap; text-align: center; }
+        .visit-counter span { font-weight: bold; color: #60a5fa; }
+    </style>
 </head>
 <body class="bg-gray-900 text-white min-h-screen pb-16">
 
     <div class="container mx-auto px-2 py-4 max-w-md">
-        <!-- Header Mobile Ottimizzato -->
-        <header class="mb-4 text-center relative flex items-center justify-between bg-gray-800 p-3 rounded-lg shadow">
-            <div class="text-left">
-                <h1 class="text-xl font-bold">📺 IPTV</h1>
-                <p class="text-[10px] text-gray-400">Mobile Stream Player</p>
+        <!-- Header Mobile Ottimizzato con Contatore Visite Integrato -->
+        <header class="mb-4 text-center relative flex flex-col gap-2 bg-gray-800 p-3 rounded-lg shadow">
+            <div class="flex items-center justify-between w-full">
+                <div class="text-left">
+                    <h1 class="text-xl font-bold">📺 IPTV</h1>
+                    <p class="text-[10px] text-gray-400">Mobile Stream Player</p>
+                </div>
+                <div class="flex gap-1">
+                    <button onclick="location.reload()" class="bg-gray-700 hover:bg-gray-600 text-gray-200 p-2 rounded text-xs flex items-center gap-1 active:scale-95 transition">
+                        🔄
+                    </button>
+                    <button onclick="toggleMobileMenu()" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-2 rounded text-xs font-medium active:scale-95 transition">
+                        ☰ Menu
+                    </button>
+                </div>
             </div>
-            <div class="flex gap-1">
-                <button onclick="location.reload()" class="bg-gray-700 hover:bg-gray-600 text-gray-200 p-2 rounded text-xs flex items-center gap-1 active:scale-95 transition">
-                    🔄
-                </button>
-                <button onclick="toggleMobileMenu()" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-2 rounded text-xs font-medium active:scale-95 transition">
-                    ☰ Menu
-                </button>
+
+            <!-- Contatori Visite Identici a Open-Meteo -->
+            <div class="flex justify-between items-center w-full pt-2 border-t border-gray-700">
+                <div class="visit-counter flex-1">Oggi: <span id="dailyVisits">0</span></div>
+                <div class="visit-counter flex-1 mx-1">Mese: <span id="monthlyVisits">0</span></div>
+                <div class="visit-counter flex-1">Tot: <span id="totalVisits">0</span></div>
             </div>
         </header>
 
@@ -63,12 +78,6 @@
         <!-- Contenitore Canali -->
         <div id="channelsContainer">
             <p class="text-gray-400 text-center text-sm mt-8">Caricamento canali in corso...</p>
-        </div>
-
-        <!-- Contatore Visite identico a Open-Meteo -->
-        <div class="mt-6 text-center bg-gray-800 border border-gray-700 p-3 rounded-lg shadow">
-            <p class="text-[11px] text-gray-400">👁️ Visite totali alla pagina</p>
-            <p id="visitCount" class="text-lg font-bold text-blue-400 mt-1">Caricamento...</p>
         </div>
     </div>
 
@@ -114,6 +123,55 @@
     </div>
 
     <script>
+        // Gestione Contatori Visite identico a Open-Meteo
+        function updateVisitCounters() {
+            const now = new Date();
+            const todayStr = now.toISOString().split('T')[0];
+            const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+            if (!sessionStorage.getItem('cavanweb_iptv_visited_session')) {
+                sessionStorage.setItem('cavanweb_iptv_visited_session', 'true');
+
+                let totalVisits = parseInt(localStorage.getItem('cavanweb_iptv_total') || '0') + 1;
+                localStorage.setItem('cavanweb_iptv_total', totalVisits);
+
+                let lastMonth = localStorage.getItem('cavanweb_iptv_month_key');
+                let monthlyVisits = parseInt(localStorage.getItem('cavanweb_iptv_monthly') || '0');
+                if (lastMonth !== currentMonthStr) {
+                    monthlyVisits = 1;
+                    localStorage.setItem('cavanweb_iptv_month_key', currentMonthStr);
+                } else {
+                    monthlyVisits += 1;
+                }
+                localStorage.setItem('cavanweb_iptv_monthly', monthlyVisits);
+
+                let lastDay = localStorage.getItem('cavanweb_iptv_day_key');
+                let dailyVisits = parseInt(localStorage.getItem('cavanweb_iptv_daily') || '0');
+                if (lastDay !== todayStr) {
+                    dailyVisits = 1;
+                    localStorage.setItem('cavanweb_iptv_day_key', todayStr);
+                } else {
+                    dailyVisits += 1;
+                }
+                localStorage.setItem('cavanweb_iptv_daily', dailyVisits);
+            }
+
+            let totalVisits = parseInt(localStorage.getItem('cavanweb_iptv_total') || '0');
+            
+            let lastMonth = localStorage.getItem('cavanweb_iptv_month_key');
+            let monthlyVisits = parseInt(localStorage.getItem('cavanweb_iptv_monthly') || '0');
+            if (lastMonth !== currentMonthStr) monthlyVisits = 0;
+
+            let lastDay = localStorage.getItem('cavanweb_iptv_day_key');
+            let dailyVisits = parseInt(localStorage.getItem('cavanweb_iptv_daily') || '0');
+            if (lastDay !== todayStr) dailyVisits = 0;
+
+            document.getElementById('dailyVisits').textContent = dailyVisits.toLocaleString('it-IT');
+            document.getElementById('monthlyVisits').textContent = monthlyVisits.toLocaleString('it-IT');
+            document.getElementById('totalVisits').textContent = totalVisits.toLocaleString('it-IT');
+        }
+        updateVisitCounters();
+
         const m3uUrl = 'https://cavannastefano-sudo.github.io/lista.m3u/IPTV.m3u'; 
         
         let channels = [];
@@ -125,20 +183,6 @@
 
         async function initApp() {
             await loadPlaylist();
-            initVisitorCounter();
-        }
-
-        // Funzione contatore visite (stile Open-Meteo)
-        async function initVisitorCounter() {
-            try {
-                // Utilizza un contatore pubblico basato su API (chiave univoca per la tua app iptv)
-                const response = await fetch('https://api.countapi.xyz/hit/cavanweb-iptv/visits');
-                const data = await response.json();
-                document.getElementById('visitCount').textContent = data.value.toLocaleString();
-            } catch (e) {
-                // Fallback nel caso in cui l'api risponda lentamente o sia offline
-                document.getElementById('visitCount').textContent = "1,245+";
-            }
         }
 
         function toggleMobileMenu() {
