@@ -14,21 +14,46 @@
     <meta name="color-scheme" content="dark">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <style>
-        /* Stile contatore visite identico a Open-Meteo */
+        /* Stili ripresi pari passo dalla pagina meteo */
+        .logo-link {
+            display: inline-block;
+            width: 42px;
+            height: 42px;
+            flex-shrink: 0;
+            background: transparent;
+            border-radius: 10px;
+            overflow: hidden;
+            transition: transform 0.2s;
+        }
+        .logo-link:hover {
+            transform: scale(1.05);
+        }
+        .logo-link img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            background: transparent;
+        }
         .visit-counters { display: flex; align-items: center; gap: 6px; }
-        .visit-counter { color: #9ca3af; font-size: 10px; font-weight: normal; opacity: 0.85; padding: 3px 6px; border-radius: 4px; background: rgba(255,255,255,0.05); white-space: nowrap; text-align: center; }
+        .visit-counter { color: #9ca3af; font-size: 11px; font-weight: normal; opacity: 0.85; padding: 3px 6px; border-radius: 4px; background: rgba(0,0,0,0.2); white-space: nowrap; text-align: center; }
         .visit-counter span { font-weight: bold; color: #60a5fa; }
     </style>
 </head>
 <body class="bg-gray-900 text-white min-h-screen pb-16">
 
     <div class="container mx-auto px-2 py-4 max-w-md">
-        <!-- Header Mobile Ottimizzato con Contatore Visite Integrato -->
-        <header class="mb-4 text-center relative flex flex-col gap-2 bg-gray-800 p-3 rounded-lg shadow">
-            <div class="flex items-center justify-between w-full">
-                <div class="text-left">
-                    <h1 class="text-xl font-bold">📺 IPTV</h1>
-                    <p class="text-[10px] text-gray-400">Mobile Stream Player</p>
+        <!-- Header Mobile Ottimizzato con Logo e Contatori identici al Meteo -->
+        <header class="mb-4 bg-gray-800 p-3 rounded-lg shadow flex flex-col gap-3">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <a href="https://www.cavanweb.com/" target="_blank" class="logo-link" title="Visita CavanWeb">
+                        <img src="SfondoN-512.png" alt="CavanWeb Logo">
+                    </a>
+                    <div>
+                        <h1 class="text-lg font-bold leading-tight">📺 IPTV</h1>
+                        <p class="text-[10px] text-gray-400">Mobile Stream Player</p>
+                    </div>
                 </div>
                 <div class="flex gap-1">
                     <button onclick="location.reload()" class="bg-gray-700 hover:bg-gray-600 text-gray-200 p-2 rounded text-xs flex items-center gap-1 active:scale-95 transition">
@@ -40,8 +65,8 @@
                 </div>
             </div>
 
-            <!-- Contatori Visite Identici a Open-Meteo -->
-            <div class="flex justify-between items-center w-full pt-2 border-t border-gray-700">
+            <!-- Contatori Visite stile Open-Meteo -->
+            <div class="visit-counters justify-between border-t border-gray-700 pt-2">
                 <div class="visit-counter flex-1">Oggi: <span id="dailyVisits">0</span></div>
                 <div class="visit-counter flex-1 mx-1">Mese: <span id="monthlyVisits">0</span></div>
                 <div class="visit-counter flex-1">Tot: <span id="totalVisits">0</span></div>
