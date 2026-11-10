@@ -161,7 +161,10 @@
     </div>
 
     <script>
+        // URL di fetch per leggere la lista nell'app
         const m3uFetchUrl = 'https://cavannastefano-sudo.github.io/lista.m3u/IPTV.m3u'; 
+        
+        // URL Raw di GitHub corretto per la condivisione diretta
         const m3uRawUrl = 'https://raw.githubusercontent.com/cavannastefano-sudo/lista.m3u/refs/heads/main/IPTV.m3u';
 
         let channels = [];
@@ -299,7 +302,7 @@
             });
         }
 
-        // Funzione condivisione singolo canale
+        // Funzione per condividere un singolo canale
         async function shareChannel(name, url) {
             if (navigator.share) {
                 try {
@@ -317,7 +320,7 @@
             }
         }
 
-        // Funzione condivisione intera playlist
+        // Funzione per condividere l'intera playlist con il link Raw corretto
         async function sharePlaylist() {
             if (navigator.share) {
                 try {
@@ -364,7 +367,7 @@
                             </div>
                         </div>
                         <div class="flex items-center gap-1 flex-shrink-0 ml-2">
-                            <button onclick="shareChannel('${channel.name.replace(/'/g, "\\'")}', '${channel.url}')" title="Condividi canale" class="bg-purple-600 hover:bg-purple-500 text-white text-[10px] p-1.5 rounded flex items-center justify-center w-7 h-7"><i class="fa-solid fa-share-nodes text-xs"></i></button>
+                            <button onclick="shareChannel('${channel.name.replace(/'/g, "\\'")}', '${channel.url}')" title="Condividi canale" class="bg-purple-600 hover:bg-purple-500 text-white text-[10px] px-2 py-1.5 rounded flex items-center justify-center">🔗</button>
                             <button onclick="playFullscreenByIndex(${index})" class="bg-blue-600 text-white text-[10px] px-2.5 py-1.5 rounded">▶ Play</button>
                         </div>
                     `;
@@ -396,7 +399,7 @@
                             </div>
                         </div>
                         <div class="flex items-center gap-1 flex-shrink-0 ml-2">
-                            <button onclick="shareChannel('${channel.name.replace(/'/g, "\\'")}', '${channel.url}')" title="Condividi canale" class="bg-purple-600 hover:bg-purple-500 text-white text-[10px] p-1.5 rounded flex items-center justify-center w-7 h-7"><i class="fa-solid fa-share-nodes text-xs"></i></button>
+                            <button onclick="shareChannel('${channel.name.replace(/'/g, "\\'")}', '${channel.url}')" title="Condividi canale" class="bg-purple-600 hover:bg-purple-500 text-white text-[10px] px-2 py-1.5 rounded flex items-center justify-center">🔗</button>
                             <button onclick="playFullscreenByIndex(${index})" class="bg-blue-600 text-white text-[10px] px-2.5 py-1 rounded">Play</button>
                         </div>
                     `;
