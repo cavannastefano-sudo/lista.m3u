@@ -77,7 +77,7 @@
             </div>
         </header>
 
-        <!-- Menu a comparsa con link a MeteoCWEB e Playlist Esterna -->
+        <!-- Menu a comparsa -->
         <div id="mobileMenu" class="hidden bg-gray-800 border border-gray-700 rounded-lg p-3 mb-4 shadow-xl text-xs space-y-2">
             <div class="font-bold text-blue-400 border-b border-gray-700 pb-1">Menu Rapido</div>
             
@@ -85,10 +85,10 @@
                 <i class="fa-solid fa-cloud-sun text-amber-400 w-4 text-center"></i> <span>MeteoCWEB</span>
             </a>
 
-            <!-- Pulsante per aprire l'intera playlist con player esterno -->
-            <a id="externalPlaylistBtn" href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-700 text-purple-300 text-xs font-semibold transition">
-                <i class="fa-solid fa-external-link-alt text-purple-400 w-4 text-center"></i> <span>Apri Playlist con Player Esterno</span>
-            </a>
+            <!-- Pulsante Condividi Intera Playlist -->
+            <button onclick="sharePlaylist()" class="w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-700 text-purple-300 text-xs font-semibold transition">
+                <i class="fa-solid fa-share-nodes text-purple-400 w-4 text-center"></i> <span>Condividi Intera Playlist</span>
+            </button>
 
             <div class="border-t border-gray-700 my-1"></div>
             <div class="text-[11px] text-gray-300">Stato Playlist: <span id="playlistStatus" class="text-yellow-400">Caricamento...</span></div>
@@ -171,10 +171,6 @@
         let savedGroup = localStorage.getItem('iptv_selected_group') || '';
 
         async function initApp() {
-            // Imposta l'intent Android per l'intera playlist nel menu
-            const cleanM3uUrl = m3uUrl.replace('https://', '').replace('http://', '');
-            document.getElementById('externalPlaylistBtn').href = `intent://${cleanM3uUrl}#Intent;package=org.videolan.vlc;type=video/*;end;`;
-
             await loadPlaylist();
         }
 
@@ -302,9 +298,40 @@
             });
         }
 
-        function getExternalPlayerUrl(url) {
-            const cleanUrl = url.replace('https://', '').replace('http://', '');
-            return `intent://${cleanUrl}#Intent;package=org.videolan.vlc;type=video/*;end;`;
+        // Funzione per condividere un singolo canale
+        async function shareChannel(name, url) {
+            if (navigator.share) {
+                try {
+                    await navigator.share({
+                        title: `Canale TV: ${name}`,
+                        text: `Guarda ${name} su myIPTV`,
+                        url: url
+                    });
+                } catch (err) {
+                    console.log('Condivisione annullata');
+                }
+            } else {
+                navigator.clipboard.writeText(url);
+                alert("Link del canale copiato negli appunti!");
+            }
+        }
+
+        // Funzione per condividere l'intera playlist
+        async function sharePlaylist() {
+            if (navigator.share) {
+                try {
+                    await navigator.share({
+                        title: 'myIPTV Playlist',
+                        text: 'Scarica o apri la lista IPTV ufficiale di myIPTV',
+                        url: m3uUrl
+                    });
+                } catch (err) {
+                    console.log('Condivisione annullata');
+                }
+            } else {
+                navigator.clipboard.writeText(m3uUrl);
+                alert("Link della playlist copiato negli appunti!");
+            }
         }
 
         function renderChannels(channelsToRender) {
@@ -326,8 +353,6 @@
 
                     const card = document.createElement('div');
                     card.className = 'bg-gray-800 rounded-lg p-3 flex items-center justify-between shadow active:bg-gray-700 transition cursor-pointer';
-                    
-                    const externalLink = getExternalPlayerUrl(channel.url);
 
                     card.innerHTML = `
                         <div class="flex items-center space-x-2 overflow-hidden flex-grow" onclick="toggleInlinePlayer(${index}, '${channel.url}', '${channel.name.replace(/'/g, "\\'")}')">
@@ -338,7 +363,7 @@
                             </div>
                         </div>
                         <div class="flex items-center gap-1 flex-shrink-0 ml-2">
-                            <a href="${externalLink}" title="Apri con Player Esterno (es. VLC)" class="bg-purple-600 hover:bg-purple-500 text-white text-[10px] px-2 py-1.5 rounded flex items-center gap-1">📱 Est.</a>
+                            <button onclick="shareChannel('${channel.name.replace(/'/g, "\\'")}', '${channel.url}')" title="Condividi o apri con player esterno" class="bg-purple-600 hover:bg-purple-500 text-white text-[10px] px-2 py-1.5 rounded flex items-center gap-1">🔗 Condividi</button>
                             <button onclick="playFullscreenByIndex(${index})" class="bg-blue-600 text-white text-[10px] px-2.5 py-1.5 rounded">▶ Play</button>
                         </div>
                     `;
@@ -360,8 +385,6 @@
                 channelsToRender.forEach((channel, index) => {
                     const item = document.createElement('div');
                     item.className = 'p-2.5 flex items-center justify-between hover:bg-gray-700 transition cursor-pointer';
-                    
-                    const externalLink = getExternalPlayerUrl(channel.url);
 
                     item.innerHTML = `
                         <div class="flex items-center space-x-2 overflow-hidden flex-grow" onclick="playFullscreenByIndex(${index})">
@@ -372,7 +395,7 @@
                             </div>
                         </div>
                         <div class="flex items-center gap-1 flex-shrink-0 ml-2">
-                            <a href="${externalLink}" title="Apri con Player Esterno (es. VLC)" class="bg-purple-600 hover:bg-purple-500 text-white text-[10px] px-2 py-1 rounded flex items-center gap-1">📱 Est.</a>
+                            <button onclick="shareChannel('${channel.name.replace(/'/g, "\\'")}', '${channel.url}')" title="Condividi o apri con player esterno" class="bg-purple-600 hover:bg-purple-500 text-white text-[10px] px-2 py-1 rounded flex items-center gap-1">🔗 Condividi</button>
                             <button onclick="playFullscreenByIndex(${index})" class="bg-blue-600 text-white text-[10px] px-2.5 py-1 rounded">Play</button>
                         </div>
                     `;
