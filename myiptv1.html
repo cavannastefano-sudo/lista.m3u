@@ -77,10 +77,10 @@
             </div>
         </header>
 
-        <!-- Menu a comparsa con link a MeteoCWEB -->
+        <!-- Menu a comparsa con link aggiornato a MeteoCWEB -->
         <div id="mobileMenu" class="hidden bg-gray-800 border border-gray-700 rounded-lg p-3 mb-4 shadow-xl text-xs space-y-2">
             <div class="font-bold text-blue-400 border-b border-gray-700 pb-1">Menu Rapido</div>
-            <a href="openwmap2.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-700 text-white text-xs font-semibold transition">
+            <a href="https://cavannastefano-sudo.github.io/OpenMeteo/openwmap2.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-700 text-white text-xs font-semibold transition">
                 <i class="fa-solid fa-cloud-sun text-amber-400 w-4 text-center"></i> <span>MeteoCWEB</span>
             </a>
             <div class="border-t border-gray-700 my-1"></div>
@@ -292,7 +292,6 @@
         }
 
         function getExternalPlayerUrl(url) {
-            // Genera l'intent Android per aprire VLC o un player esterno compatibile
             const cleanUrl = url.replace('https://', '').replace('http://', '');
             return `intent://${cleanUrl}#Intent;package=org.videolan.vlc;type=video/*;end;`;
         }
