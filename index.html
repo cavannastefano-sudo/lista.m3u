@@ -4,11 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>myIPTV</title>
-    <!-- Icona dell'app per browser e Chrome CORRETTA -->
+    <!-- Icona dell'app per browser e Chrome -->
     <link rel="icon" type="image/png" href="icon.png">
     <link rel="apple-touch-icon" href="icon.png">
     <!-- Tailwind CSS -->
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <!-- FontAwesome per le icone -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- HLS.js per la riproduzione m3u8 -->
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <!-- Manifest per installazione PWA / App Chrome -->
@@ -37,9 +39,6 @@
             display: block;
             background: transparent;
         }
-        .visit-counters { display: flex; align-items: center; gap: 6px; }
-        .visit-counter { color: #9ca3af; font-size: 11px; font-weight: normal; opacity: 0.85; padding: 3px 6px; border-radius: 4px; background: rgba(0,0,0,0.2); white-space: nowrap; text-align: center; }
-        .visit-counter span { font-weight: bold; color: #60a5fa; }
 
         /* Regola responsive: su PC (schermi larghi) la larghezza massima si espande e la griglia diventa a 2 colonne */
         @media (min-width: 768px) {
@@ -55,7 +54,7 @@
 <body class="bg-gray-900 text-white min-h-screen pb-16">
 
     <div class="container mx-auto px-4 py-4 max-w-md">
-        <!-- Header con Logo e Contatori -->
+        <!-- Header con Logo e Controlli -->
         <header class="mb-4 bg-gray-800 p-3 rounded-lg shadow flex flex-col gap-3">
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
@@ -68,7 +67,7 @@
                     </div>
                 </div>
                 <div class="flex gap-1">
-                    <button onclick="location.reload()" class="bg-gray-700 hover:bg-gray-600 text-gray-200 p-2 rounded text-xs flex items-center gap-1 active:scale-95 transition">
+                    <button onclick="location.reload()" class="bg-gray-700 hover:bg-gray-600 text-gray-200 p-2 rounded text-xs flex items-center gap-1 active:scale-95 transition" title="Aggiorna">
                         🔄
                     </button>
                     <button onclick="toggleMobileMenu()" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-2 rounded text-xs font-medium active:scale-95 transition">
@@ -76,18 +75,22 @@
                     </button>
                 </div>
             </div>
-
-            <!-- Contatori Visite -->
-            <div class="visit-counters justify-between border-t border-gray-700 pt-2">
-                <div class="visit-counter flex-1">Oggi: <span id="dailyVisits">0</span></div>
-                <div class="visit-counter flex-1 mx-1">Mese: <span id="monthlyVisits">0</span></div>
-                <div class="visit-counter flex-1">Tot: <span id="totalVisits">0</span></div>
-            </div>
         </header>
 
-        <!-- Menu a comparsa -->
+        <!-- Menu a comparsa con link a MeteoCWEB e Playlist Esterna -->
         <div id="mobileMenu" class="hidden bg-gray-800 border border-gray-700 rounded-lg p-3 mb-4 shadow-xl text-xs space-y-2">
-            <div class="font-bold text-blue-400 border-b border-gray-700 pb-1">Gestione Playlist</div>
+            <div class="font-bold text-blue-400 border-b border-gray-700 pb-1">Menu Rapido</div>
+            
+            <a href="https://cavannastefano-sudo.github.io/OpenMeteo/openwmap2.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-700 text-white text-xs font-semibold transition">
+                <i class="fa-solid fa-cloud-sun text-amber-400 w-4 text-center"></i> <span>MeteoCWEB</span>
+            </a>
+
+            <!-- Pulsante per aprire l'intera playlist con player esterno -->
+            <a id="externalPlaylistBtn" href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-700 text-purple-300 text-xs font-semibold transition">
+                <i class="fa-solid fa-external-link-alt text-purple-400 w-4 text-center"></i> <span>Apri Playlist con Player Esterno</span>
+            </a>
+
+            <div class="border-t border-gray-700 my-1"></div>
             <div class="text-[11px] text-gray-300">Stato Playlist: <span id="playlistStatus" class="text-yellow-400">Caricamento...</span></div>
             <div class="flex gap-2 pt-1">
                 <button onclick="refreshPlaylistData()" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white py-2 rounded font-medium transition">Aggiorna Playlist</button>
@@ -95,7 +98,7 @@
             </div>
         </div>
 
-        <!-- Barra di ricerca e Filtro Gruppi con pulsanti Griglia/Lista attivi per tutti -->
+        <!-- Barra di ricerca e Filtro Gruppi con pulsanti Griglia/Lista -->
         <div class="flex flex-col gap-2 mb-4">
             <input type="text" id="searchInput" placeholder="🔍 Cerca canale..." class="w-full px-3 py-2 rounded-lg bg-gray-800 border border-gray-700 text-sm focus:outline-none focus:border-blue-500">
             
@@ -158,53 +161,6 @@
     </div>
 
     <script>
-        function updateVisitCounters() {
-            const now = new Date();
-            const todayStr = now.toISOString().split('T')[0];
-            const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-
-            if (!sessionStorage.getItem('cavanweb_iptv_visited_session')) {
-                sessionStorage.setItem('cavanweb_iptv_visited_session', 'true');
-
-                let totalVisits = parseInt(localStorage.getItem('cavanweb_iptv_total') || '0') + 1;
-                localStorage.setItem('cavanweb_iptv_total', totalVisits);
-
-                let lastMonth = localStorage.getItem('cavanweb_iptv_month_key');
-                let monthlyVisits = parseInt(localStorage.getItem('cavanweb_iptv_monthly') || '0');
-                if (lastMonth !== currentMonthStr) {
-                    monthlyVisits = 1;
-                    localStorage.setItem('cavanweb_iptv_month_key', currentMonthStr);
-                } else {
-                    monthlyVisits += 1;
-                }
-                localStorage.setItem('cavanweb_iptv_monthly', monthlyVisits);
-
-                let lastDay = localStorage.getItem('cavanweb_iptv_day_key');
-                let dailyVisits = parseInt(localStorage.getItem('cavanweb_iptv_daily') || '0');
-                if (lastDay !== todayStr) {
-                    dailyVisits = 1;
-                    localStorage.setItem('cavanweb_iptv_day_key', todayStr);
-                } else {
-                    dailyVisits += 1;
-                }
-                localStorage.setItem('cavanweb_iptv_daily', dailyVisits);
-            }
-
-            let totalVisits = parseInt(localStorage.getItem('cavanweb_iptv_total') || '0');
-            let lastMonth = localStorage.getItem('cavanweb_iptv_month_key');
-            let monthlyVisits = parseInt(localStorage.getItem('cavanweb_iptv_monthly') || '0');
-            if (lastMonth !== currentMonthStr) monthlyVisits = 0;
-
-            let lastDay = localStorage.getItem('cavanweb_iptv_day_key');
-            let dailyVisits = parseInt(localStorage.getItem('cavanweb_iptv_daily') || '0');
-            if (lastDay !== todayStr) dailyVisits = 0;
-
-            document.getElementById('dailyVisits').textContent = dailyVisits.toLocaleString('it-IT');
-            document.getElementById('monthlyVisits').textContent = monthlyVisits.toLocaleString('it-IT');
-            document.getElementById('totalVisits').textContent = totalVisits.toLocaleString('it-IT');
-        }
-        updateVisitCounters();
-
         const m3uUrl = 'https://cavannastefano-sudo.github.io/lista.m3u/IPTV.m3u'; 
         
         let channels = [];
@@ -215,6 +171,10 @@
         let savedGroup = localStorage.getItem('iptv_selected_group') || '';
 
         async function initApp() {
+            // Imposta l'intent Android per l'intera playlist nel menu
+            const cleanM3uUrl = m3uUrl.replace('https://', '').replace('http://', '');
+            document.getElementById('externalPlaylistBtn').href = `intent://${cleanM3uUrl}#Intent;package=org.videolan.vlc;type=video/*;end;`;
+
             await loadPlaylist();
         }
 
@@ -342,6 +302,11 @@
             });
         }
 
+        function getExternalPlayerUrl(url) {
+            const cleanUrl = url.replace('https://', '').replace('http://', '');
+            return `intent://${cleanUrl}#Intent;package=org.videolan.vlc;type=video/*;end;`;
+        }
+
         function renderChannels(channelsToRender) {
             const container = document.getElementById('channelsContainer');
             container.innerHTML = '';
@@ -362,6 +327,8 @@
                     const card = document.createElement('div');
                     card.className = 'bg-gray-800 rounded-lg p-3 flex items-center justify-between shadow active:bg-gray-700 transition cursor-pointer';
                     
+                    const externalLink = getExternalPlayerUrl(channel.url);
+
                     card.innerHTML = `
                         <div class="flex items-center space-x-2 overflow-hidden flex-grow" onclick="toggleInlinePlayer(${index}, '${channel.url}', '${channel.name.replace(/'/g, "\\'")}')">
                             <img src="${channel.logo}" alt="" class="w-8 h-8 object-contain bg-transparent rounded flex-shrink-0" onerror="this.src='https://via.placeholder.com/32?text=TV'">
@@ -370,7 +337,10 @@
                                 <p class="text-[10px] text-gray-400 truncate">${channel.group}</p>
                             </div>
                         </div>
-                        <button onclick="playFullscreenByIndex(${index})" class="bg-blue-600 text-white text-[10px] px-2.5 py-1.5 rounded flex-shrink-0 ml-2">▶ Play</button>
+                        <div class="flex items-center gap-1 flex-shrink-0 ml-2">
+                            <a href="${externalLink}" title="Apri con Player Esterno (es. VLC)" class="bg-purple-600 hover:bg-purple-500 text-white text-[10px] px-2 py-1.5 rounded flex items-center gap-1">📱 Est.</a>
+                            <button onclick="playFullscreenByIndex(${index})" class="bg-blue-600 text-white text-[10px] px-2.5 py-1.5 rounded">▶ Play</button>
+                        </div>
                     `;
                     wrapper.appendChild(card);
 
@@ -390,6 +360,9 @@
                 channelsToRender.forEach((channel, index) => {
                     const item = document.createElement('div');
                     item.className = 'p-2.5 flex items-center justify-between hover:bg-gray-700 transition cursor-pointer';
+                    
+                    const externalLink = getExternalPlayerUrl(channel.url);
+
                     item.innerHTML = `
                         <div class="flex items-center space-x-2 overflow-hidden flex-grow" onclick="playFullscreenByIndex(${index})">
                             <img src="${channel.logo}" alt="" class="w-7 h-7 object-contain rounded flex-shrink-0" onerror="this.src='https://via.placeholder.com/28?text=TV'">
@@ -398,7 +371,10 @@
                                 <div class="text-[10px] text-gray-400 truncate">${channel.group}</div>
                             </div>
                         </div>
-                        <button onclick="playFullscreenByIndex(${index})" class="bg-blue-600 text-white text-[10px] px-2.5 py-1 rounded">Play</button>
+                        <div class="flex items-center gap-1 flex-shrink-0 ml-2">
+                            <a href="${externalLink}" title="Apri con Player Esterno (es. VLC)" class="bg-purple-600 hover:bg-purple-500 text-white text-[10px] px-2 py-1 rounded flex items-center gap-1">📱 Est.</a>
+                            <button onclick="playFullscreenByIndex(${index})" class="bg-blue-600 text-white text-[10px] px-2.5 py-1 rounded">Play</button>
+                        </div>
                     `;
                     listDiv.appendChild(item);
                 });
